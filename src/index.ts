@@ -20,6 +20,10 @@ app.use("/api",routerUsers);
 app.use("/api",routerRoles);
 app.use("/api",routerProject)
 
+app.use("/",(req,res)=>{
+    res.send("Hello World");
+});
+
 app.listen(port, () => {
     console.log(`Server is running on port at http://localhost:${port}`);
 });
