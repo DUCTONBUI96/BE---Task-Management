@@ -1,3 +1,5 @@
-import express, { Router } from "express";
+import express from "express";
 
 const Cmt = express.Router();
+
+export default Cmt;

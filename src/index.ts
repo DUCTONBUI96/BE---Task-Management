@@ -3,10 +3,16 @@ import cors from 'cors';
 import routerUsers from './routes/RouterUsers';
 import routerRoles from './routes/routesRoles';
 import routerProject from './routes/RouterProject';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 const app = express();
 app.use(express.json());
-app.use(cors());
+app.use(cors({
+    origin: process.env['CORS_ORIGIN']?.split(",") || ["http://localhost:3000"],
+	credentials: true,
+}));
 const port = 3001;
 
 //ROUTER
