@@ -1,4 +1,4 @@
-import { getUsers,CreateUser,deleteUser } from "../model/model";
+import { getUsers,CreateUser,deleteUser } from "../model/Users";
 import { NextFunction, Response,Request } from "express";
 
 const handleResponse = (res:Response,status:number,message:string,data?:any):Response =>{
@@ -11,8 +11,8 @@ const handleResponse = (res:Response,status:number,message:string,data?:any):Res
 
 export const GetAllUsers = async (req:Request,res:Response,next:NextFunction)=>{
     try{
-        const allUsers = await getUsers();
-        handleResponse(res,201,"successfull",allUsers);
+        const all = await getUsers();
+        handleResponse(res,201,"successfull",all);
     }
     catch(err){
         next(err);
