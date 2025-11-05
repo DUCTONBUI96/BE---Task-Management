@@ -5,12 +5,13 @@
 - [📁 Cấu trúc thư mục](#-cấu-trúc-thư-mục)
 - [💻 Yêu cầu hệ thống](#-yêu-cầu-hệ-thống)
 - [🚀 Cài đặt và Chạy với Docker](#-cài-đặt-và-chạy-với-docker)
-- [🔧 Development Mode](#-development-mode)
-- [🗃️ Prisma ORM](#️-prisma-orm)
-- [🛠️ DBeaver - Database Management Tool](#️-dbeaver---database-management-tool)
-- [📡 API Endpoints](#-api-endpoints)
-- [🐳 Các lệnh Docker hữu ích](#-các-lệnh-docker-hữu-ích)
-- [❓ Troubleshooting](#-troubleshooting)
+- [�️ Development Mode](#️-development-mode)
+- [� Các lệnh Docker hữu ích](#-các-lệnh-docker-hữu-ích)
+- [🔧 Troubleshooting](#-troubleshooting)
+- [�🗃️ Prisma ORM - Database Management](#️-prisma-orm---database-management)
+- [� DBeaver - Database GUI Tool](#-dbeaver---database-gui-tool)
+- [� API Endpoints](#-api-endpoints)
+- [� Liên hệ & Support](#-liên-hệ--support)
 
 ## 🎯 Giới thiệu
 
@@ -96,28 +97,29 @@ cd BE---Task-Management
 
 ### Bước 2: Cấu hình biến môi trường
 
-1. Sao chép file `.env.example` thành `.env`:
-   ```bash
-   # Windows (PowerShell)
-   Copy-Item .env.example .env
-   
-   # Linux/Mac
-   cp .env.example .env
-   ```
+Tạo file `.env` trong thư mục root của project với các biến sau:
 
-2. Mở file `.env` và cập nhật thông tin (nếu cần):
-   ```env
-   # PostgreSQL Configuration
-   PGUSER=postgres
-   PGHOST=postgres                    # Tên service trong docker-compose
-   PGDATABASE=taskmanagement
-   PGPASSWORD=postgres123             # Thay đổi password mạnh hơn nếu cần
-   PGPORT=5432
-   
-   # Application Configuration
-   NODE_ENV=development
-   PORT=3001
-   ```
+```env
+# PostgreSQL Configuration
+PGUSER=postgres
+PGHOST=localhost                      # localhost cho dev, postgres cho docker
+PGDATABASE=Small_team_task_management
+PGPASSWORD=your_password_here         # Thay đổi password của bạn
+PGPORT=5432
+
+# Application Configuration
+APP_PORT=5001
+CORS_ORIGIN=http://localhost:3000
+NODE_ENV=development
+
+# Prisma Database URL (tự động sử dụng các biến trên)
+DATABASE_URL="postgresql://${PGUSER}:${PGPASSWORD}@${PGHOST}:${PGPORT}/${PGDATABASE}?schema=public"
+```
+
+**Lưu ý:**
+- `PGHOST=localhost` khi chạy backend local (dev mode)
+- `PGHOST=postgres` khi chạy với Docker Compose (production mode)
+- Thay đổi `PGPASSWORD` thành password bảo mật của bạn
 
 ### Bước 3: Khởi động Docker Compose
 
@@ -377,6 +379,60 @@ docker exec -it task-management-backend sh
 # Chạy migration scripts (nếu có)
 # npm run migrate
 ```
+
+### Lỗi: Migration mismatch - "applied to database but missing from local"
+
+**Lỗi:**
+```
+The following migration(s) are applied to the database but missing from the local migrations directory: 20251105085040_init
+
+We need to reset the "public" schema at "localhost:5432"
+```
+
+**Nguyên nhân:** 
+Database có migrations cũ nhưng thư mục `prisma/migrations/` đã bị xóa hoặc không đồng bộ.
+
+**Giải pháp 1: Reset database (Khuyến nghị cho development - MẤT HẾT DATA)**
+
+```bash
+# Reset database về trạng thái ban đầu
+npx prisma migrate reset
+
+# Sau đó chạy lại migrations
+npx prisma migrate dev
+
+# Seed data (nếu cần)
+npm run prisma:seed
+```
+
+**Giải pháp 2: Tạo lại migrations từ schema hiện tại**
+
+```bash
+# Xóa tất cả migrations cũ trong database
+npx prisma migrate reset --skip-seed
+
+# Tạo migration mới từ schema
+npx prisma migrate dev --name init
+
+# Seed data
+npm run prisma:seed
+```
+
+**Giải pháp 3: Giữ data - Đánh dấu migrations đã apply (Cẩn thận!)**
+
+```bash
+# Resolve bằng cách đánh dấu migrations hiện tại là đã apply
+npx prisma migrate resolve --applied 20251105085040_init
+
+# Hoặc đánh dấu tất cả migrations đã apply
+npx prisma db push --accept-data-loss
+```
+
+**Lưu ý:**
+- `prisma migrate reset` sẽ **XÓA TẤT CẢ DATA** trong database
+- Chỉ dùng trong môi trường development
+- Backup data quan trọng trước khi reset
+- Trong production, cần xử lý migrations cẩn thận hơn
 
 ## �️ Prisma ORM - Database Management
 
