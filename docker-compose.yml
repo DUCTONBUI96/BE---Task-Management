@@ -39,6 +39,7 @@ services:
       - PGPASSWORD=${PGPASSWORD}
       - PGPORT=${PGPORT}
       - PORT=3001
+      - DATABASE_URL=postgresql://${PGUSER}:${PGPASSWORD}@${PGHOST}:${PGPORT}/${PGDATABASE}?schema=public
     depends_on:
       postgres:
         condition: service_healthy

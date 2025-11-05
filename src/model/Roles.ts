@@ -1,25 +1,36 @@
-import pool from "../config/database";
+import prisma from "../config/prisma";
 
-export const getAllRole = async ()=>{
-    const result = await pool.query("SELECT * FROM Roles");
-    return result.rows;
-}
+export const getAllRole = async () => {
+  return await prisma.role.findMany({
+    orderBy: {
+      name: 'asc',
+    },
+  });
+};
 
-export const getRolebyId = async (id :number )=>{
-    const result = await pool.query("SELECT * FROM roles where id = $1",[id]);
-    return result.rows;
-}
+export const getRolebyId = async (id: number) => {
+  return await prisma.role.findUnique({
+    where: { id },
+  });
+};
 
-export const CreateRole = async (name :string,Description:string) => {
-    const result = await pool.query("INSERT INTO Roles (Name,Description)VALUES($1,$2)",[name,Description]);
-    return result.rows;
-}
+export const CreateRole = async (name: string, description: string) => {
+  return await prisma.role.create({
+    data: {
+      name,
+      description,
+    },
+  });
+};
 
-export const DeleteRole = async (id:number)=>{
-    const value = [id];
-    const result = await pool.query("DELETE FROM Roles WHERE id = $1",value);
-    if (result.rowCount === 0) {
-        throw new Error(`Task with id ${id} not found or already deleted`);
-    }
-    return result.rows[0];
-}
+export const DeleteRole = async (id: number) => {
+  const role = await prisma.role.delete({
+    where: { id },
+  });
+  
+  if (!role) {
+    throw new Error(`Role with id ${id} not found or already deleted`);
+  }
+  
+  return role;
+};

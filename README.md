@@ -324,7 +324,198 @@ docker exec -it task-management-backend sh
 # npm run migrate
 ```
 
-## 📞 Liên hệ & Support
+## �️ Prisma ORM - Database Management
+
+Project này sử dụng **Prisma** làm ORM để quản lý database.
+
+### Prisma Commands
+
+```bash
+# Generate Prisma Client (sau khi thay đổi schema)
+npx prisma generate
+
+# Tạo migration mới
+npx prisma migrate dev --name <migration_name>
+
+# Apply migrations to production
+npx prisma migrate deploy
+
+# Reset database (xóa tất cả data)
+npx prisma migrate reset
+
+# Open Prisma Studio (Database GUI)
+npx prisma studio
+
+# Format schema file
+npx prisma format
+
+# Seed database với dữ liệu mẫu
+npm run prisma:seed
+```
+
+### Prisma Schema Location
+
+- Schema file: `prisma/schema.prisma`
+- Migrations: `prisma/migrations/` (auto-generated, don't edit manually)
+- Seed script: `prisma/seed.ts`
+
+### Database Models
+
+- **User** - Người dùng (UUID primary key)
+- **Role** - Vai trò (Admin, Project Manager, Developer, Viewer)
+- **Project** - Dự án
+- **Task** - Nhiệm vụ
+- **TaskStatus** - Trạng thái task (To Do, In Progress, Done)
+- **TaskPriority** - Độ ưu tiên (Low, Medium, High, Urgent)
+- **Tag** - Nhãn cho task
+- **Comment** - Bình luận trong task
+- **UserRoleProject** - Vai trò của user trong project
+- **UserTask** - User được gán vào task
+- **TaskTag** - Tag của task
+
+### Development Workflow
+
+1. **Khởi động PostgreSQL:**
+   ```bash
+   docker-compose -f docker-compose.dev.yml up -d
+   ```
+
+2. **Chạy migrations (lần đầu):**
+   ```bash
+   npx prisma migrate dev --name init
+   ```
+
+3. **Generate Prisma Client:**
+   ```bash
+   npx prisma generate
+   ```
+
+4. **Seed data (optional):**
+   ```bash
+   npm run prisma:seed
+   ```
+
+5. **Chạy backend:**
+   ```bash
+   npm run dev
+   ```
+
+### Thay đổi Schema
+
+Khi thay đổi `prisma/schema.prisma`:
+
+```bash
+# 1. Tạo migration mới
+npx prisma migrate dev --name <descriptive_name>
+
+# 2. Prisma tự động generate client và apply migration
+# 3. Restart backend để áp dụng thay đổi
+```
+
+## 🔍 DBeaver - Database GUI Tool
+
+### Cài đặt DBeaver
+
+1. Download: https://dbeaver.io/download/
+2. Chọn version "Community Edition" (miễn phí)
+3. Cài đặt theo hướng dẫn
+
+### Kết nối PostgreSQL trong DBeaver
+
+#### Bước 1: Tạo Connection mới
+
+1. Mở DBeaver
+2. Click **Database** → **New Database Connection**
+3. Chọn **PostgreSQL**
+4. Click **Next**
+
+#### Bước 2: Cấu hình Connection
+
+**Main tab:**
+```
+Host: localhost
+Port: 5432
+Database: Small_team_task_management
+Username: postgres
+Password: <your_password_from_.env>
+```
+
+**Advanced settings (optional):**
+- Show all databases: ✅
+
+#### Bước 3: Test Connection
+
+1. Click **Test Connection**
+2. Nếu thiếu driver, DBeaver sẽ tự động download
+3. Thấy "Connected" → Click **Finish**
+
+### Sử dụng DBeaver
+
+#### Xem Tables
+
+```
+Connections 
+  └─ PostgreSQL - localhost
+      └─ Databases
+          └─ Small team task management
+              └─ Schemas
+                  └─ public
+                      └─ Tables
+```
+
+#### Xem Data
+
+1. Double-click vào table (VD: `users`)
+2. Tab **Data** hiển thị records
+3. Tab **Properties** hiển thị cấu trúc table
+
+#### Chạy SQL Query
+
+1. Click chuột phải vào database → **SQL Editor** → **New SQL Script**
+2. Viết query:
+   ```sql
+   SELECT * FROM users;
+   SELECT * FROM tasks WHERE project_id = 1;
+   ```
+3. **Ctrl + Enter** để chạy query
+
+#### ER Diagram
+
+1. Click chuột phải vào database
+2. Chọn **View Diagram** → **Generate from database**
+3. DBeaver sẽ tạo ER Diagram tự động
+
+#### Export Data
+
+1. Click chuột phải vào table
+2. **Export Data** → Chọn format (CSV, JSON, SQL)
+3. Follow wizard
+
+#### Import Data
+
+1. Click chuột phải vào table
+2. **Import Data** → Chọn file
+3. Map columns và import
+
+### Tips & Tricks
+
+```sql
+-- Xem tất cả tables
+SELECT table_name FROM information_schema.tables 
+WHERE table_schema = 'public';
+
+-- Xem structure của table
+\d users
+
+-- Count records
+SELECT COUNT(*) FROM tasks;
+
+-- Xem foreign keys
+SELECT * FROM information_schema.table_constraints 
+WHERE constraint_type = 'FOREIGN KEY';
+```
+
+## �📞 Liên hệ & Support
 
 - **Repository**: https://github.com/DUCTONBUI96/BE---Task-Management
 - **Issues**: Tạo issue trên GitHub nếu gặp vấn đề
@@ -333,6 +524,7 @@ docker exec -it task-management-backend sh
 
 - **Backend API**: http://localhost:3001/api
 - **PostgreSQL**: localhost:5432
+- **Prisma Studio**: http://localhost:5555 (khi chạy `npx prisma studio`)
 
 Frontend có thể kết nối đến backend qua: `http://localhost:3001/api`
 

@@ -1,22 +1,49 @@
-import pool from "../config/database";
+import prisma from "../config/prisma";
 
-export const getUsers = async ()=>{
-    const result = await pool.query("SELECT * FROM users");
-    return result.rows;
-}
+export const getUsers = async () => {
+  return await prisma.user.findMany({
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      createdAt: true,
+      updatedAt: true,
+    },
+  });
+};
 
-export const CreateUser = async(name:string,email:string,passwordhash:string)=>{
-    const value = [ name,email,passwordhash]
-    const result = await pool.query("INSERT INTO users(Name,email,passwordhash) VALUES($1,$2,$3) RETURNING * ",value);
-    return result.rows;
-}
+export const getUserById = async (id: string) => {
+  return await prisma.user.findUnique({
+    where: { id },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      createdAt: true,
+      updatedAt: true,
+    },
+  });
+};
 
-export const deleteUser = async(id:number)=>{
-    const value = [id];
-    const result = await pool.query("DELETE FROM users WHERE id = $1",value);
-    if (result.rowCount === 0) {
-        throw new Error(`Task with id ${id} not found or already deleted`);
-    }
-    return result.rows[0];
-}
+export const CreateUser = async (name: string, email: string, passwordhash: string) => {
+  return await prisma.user.create({
+    data: {
+      name,
+      email,
+      passwordhash,
+    },
+  });
+};
+
+export const deleteUser = async (id: string) => {
+  const user = await prisma.user.delete({
+    where: { id },
+  });
+  
+  if (!user) {
+    throw new Error(`User with id ${id} not found or already deleted`);
+  }
+  
+  return user;
+};
 
