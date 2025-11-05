@@ -1,20 +1,74 @@
 # Task Management Backend
 
 ## 📋 Mục lục
-- [Giới thiệu](#giới-thiệu)
-- [Yêu cầu hệ thống](#yêu-cầu-hệ-thống)
-- [Cài đặt và Chạy với Docker](#cài-đặt-và-chạy-với-docker)
-- [Development Mode](#development-mode)
-- [Các lệnh Docker hữu ích](#các-lệnh-docker-hữu-ích)
-- [Troubleshooting](#troubleshooting)
+- [🎯 Giới thiệu](#-giới-thiệu)
+- [📁 Cấu trúc thư mục](#-cấu-trúc-thư-mục)
+- [💻 Yêu cầu hệ thống](#-yêu-cầu-hệ-thống)
+- [🚀 Cài đặt và Chạy với Docker](#-cài-đặt-và-chạy-với-docker)
+- [🔧 Development Mode](#-development-mode)
+- [🗃️ Prisma ORM](#️-prisma-orm)
+- [🛠️ DBeaver - Database Management Tool](#️-dbeaver---database-management-tool)
+- [📡 API Endpoints](#-api-endpoints)
+- [🐳 Các lệnh Docker hữu ích](#-các-lệnh-docker-hữu-ích)
+- [❓ Troubleshooting](#-troubleshooting)
 
 ## 🎯 Giới thiệu
 
 Backend API cho ứng dụng quản lý công việc (Task Management), được xây dựng với:
 - **Node.js** + **Express** - Backend framework
 - **TypeScript** - Type-safe JavaScript
+- **Prisma ORM** - Database ORM với type-safety
 - **PostgreSQL** - Cơ sở dữ liệu
 - **Docker** & **Docker Compose** - Containerization
+
+## 📁 Cấu trúc thư mục
+
+```
+BE---Task-Management/
+├── prisma/
+│   ├── schema.prisma          # Prisma schema - Database models
+│   ├── migrations/            # Database migrations (auto-generated)
+│   └── seed.ts               # Seed data script
+├── src/
+│   ├── index.ts              # Entry point
+│   ├── config/
+│   │   ├── database.ts       # PostgreSQL pool config (legacy)
+│   │   └── prisma.ts         # Prisma Client singleton
+│   ├── controllers/
+│   │   ├── ControllersCmt.ts
+│   │   ├── ControllersProjects.ts
+│   │   ├── ControllersRoles.ts
+│   │   ├── ControllersTask.ts
+│   │   └── ControllersUsers.ts
+│   ├── model/
+│   │   ├── Comment.ts        # Prisma queries for comments
+│   │   ├── Project.ts        # Prisma queries for projects
+│   │   ├── Roles.ts          # Prisma queries for roles
+│   │   ├── Task.ts           # Prisma queries for tasks
+│   │   └── Users.ts          # Prisma queries for users
+│   └── routes/
+│       ├── RouterCmt.ts
+│       ├── RouterProject.ts
+│       ├── RouterTask.ts
+│       ├── RouterUsers.ts
+│       └── routesRoles.ts
+├── .env                      # Environment variables (not in git)
+├── .gitignore
+├── docker-compose.yml        # Production Docker setup
+├── docker-compose.dev.yml    # Development PostgreSQL only
+├── Dockerfile                # Backend container
+├── package.json
+├── tsconfig.json
+└── README.md
+```
+
+### Thư mục quan trọng
+
+- **`prisma/`**: Prisma ORM configuration và migrations
+- **`src/model/`**: Data access layer với Prisma Client
+- **`src/controllers/`**: Business logic layer
+- **`src/routes/`**: API routes definition
+- **`src/config/`**: Configuration files
 
 ## 💻 Yêu cầu hệ thống
 
@@ -373,7 +427,7 @@ npm run prisma:seed
 - **UserTask** - User được gán vào task
 - **TaskTag** - Tag của task
 
-### Development Workflow
+### Development Workflow riêng khi phát triển backend với Prisma tách biệt với production
 
 1. **Khởi động PostgreSQL:**
    ```bash
