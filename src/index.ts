@@ -1,8 +1,10 @@
 import express from 'express';
 import cors from 'cors';
-import routerUsers from './routes/RouterUsers';
-import routerRoles from './routes/routesRoles';
-import routerProject from './routes/RouterProject';
+import routerUsers from './routes/user.routes';
+import routerRoles from './routes/role.routes';
+import routerProject from './routes/project.routes';
+import routerTask from './routes/task.routes';
+import routerComment from './routes/comment.routes';
 import dotenv from 'dotenv';
 
 dotenv.config();
@@ -16,17 +18,20 @@ app.use(cors({
 const port = 3001;
 
 //ROUTER
-app.use("/api",routerUsers);
-app.use("/api",routerRoles);
-app.use("/api",routerProject)
+app.use("/api", routerUsers);
+app.use("/api", routerRoles);
+app.use("/api", routerProject);
+app.use("/api", routerTask);
+app.use("/api", routerComment);
 
-app.use("/",(req,res)=>{
-    res.send("Hello World");
+app.use("/", (req, res) => {
+    res.send("Server is running");
 });
 
 app.listen(port, () => {
     console.log(`Server is running on port at http://localhost:${port}`);
 });
+
 
 
 
