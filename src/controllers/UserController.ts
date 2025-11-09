@@ -1,6 +1,6 @@
 import { NextFunction, Response, Request } from 'express';
 import { UserService } from '../services/UserService';
-import { CreateUserDTO, UpdateUserDTO, LoginUserDTO, ChangePasswordDTO } from '../dtos/UserDTO';
+import { CreateUserDTO, UpdateUserDTO, LoginUserDTO, ChangePasswordDTO, UpdateAvatarDTO } from '../dtos/UserDTO';
 
 /**
  * UserController - Xử lý HTTP requests liên quan đến User
@@ -65,7 +65,7 @@ export class UserController {
       const dto: CreateUserDTO = {
         name: req.body.name,
         email: req.body.email,
-        password: req.body.password || req.body.passwordhash,
+        password: req.body.password || req.body.passwordHash,
       };
 
       const user = await this.userService.createUser(dto);
@@ -172,6 +172,33 @@ export class UserController {
       }
 
       this.handleResponse(res, 200, 'Success', user);
+    } catch (err) {
+      next(err);
+    }
+  };
+
+  /**
+   * PUT /users/:id/avatar - Cập nhật avatar user
+   */
+  updateAvatar = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const id = req.params['id'];
+      if (!id) {
+        this.handleResponse(res, 400, 'User ID is required');
+        return;
+      }
+      const dto: UpdateAvatarDTO = {
+        avatarUrl: req.body.avatarUrl,
+        avatarId: req.body.avatarId,
+      };
+
+      if (!dto.avatarUrl || !dto.avatarId) {
+        this.handleResponse(res, 400, 'avatarUrl and avatarId are required');
+        return;
+      }
+
+      const user = await this.userService.updateAvatar(id, dto);
+      this.handleResponse(res, 200, 'Avatar updated successfully', user);
     } catch (err) {
       next(err);
     }

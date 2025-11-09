@@ -31,7 +31,9 @@ export class UserRepository extends BaseRepository<User, string> {
       data.id,
       data.email,
       data.name,
-      data.passwordhash,
+      data.passwordHash,
+      data.avatarUrl,
+      data.avatarId,
       data.createdAt,
       data.updatedAt
     );
@@ -43,7 +45,9 @@ export class UserRepository extends BaseRepository<User, string> {
     if (data.id !== undefined) prismaData.id = data.id;
     if (data.email !== undefined) prismaData.email = data.email;
     if (data.name !== undefined) prismaData.name = data.name;
-    if (data.passwordhash !== undefined) prismaData.passwordhash = data.passwordhash;
+    if (data.passwordHash !== undefined) prismaData.passwordHash = data.passwordHash;
+    if (data.avatarUrl !== undefined) prismaData.avatarUrl = data.avatarUrl;
+    if (data.avatarId !== undefined) prismaData.avatarId = data.avatarId;
     
     return prismaData;
   }
@@ -65,7 +69,7 @@ export class UserRepository extends BaseRepository<User, string> {
   /**
    * Find all users with basic info (excluding password)
    */
-  async findAllBasicInfo(): Promise<Omit<User, 'passwordhash'>[]> {
+  async findAllBasicInfo(): Promise<Omit<User, 'passwordHash'>[]> {
     try {
       const users = await this.prisma.user.findMany({
         select: {
@@ -76,8 +80,8 @@ export class UserRepository extends BaseRepository<User, string> {
           updatedAt: true,
         },
       });
-      
-      return users.map(u => {
+
+      return users.map((u: any) => {
         const user = new User(u.id, u.email, u.name, '', u.createdAt, u.updatedAt);
         return user.toJSON() as any;
       });
@@ -93,7 +97,7 @@ export class UserRepository extends BaseRepository<User, string> {
     try {
       const updated = await this.prisma.user.update({
         where: { id: userId },
-        data: { passwordhash: newPasswordHash },
+        data: { passwordHash: newPasswordHash },
       });
       return this.mapToDomain(updated);
     } catch (error) {
@@ -132,13 +136,13 @@ export class UserRepository extends BaseRepository<User, string> {
           id: true,
           name: true,
           email: true,
-          passwordhash: true,
+          passwordHash: true,
           createdAt: true,
           updatedAt: true,
         },
       });
-      
-      return users.map(u => this.mapToDomain(u));
+
+      return users.map((u: any) => this.mapToDomain(u));
     } catch (error) {
       throw new Error(`Error finding users by project: ${error}`);
     }
@@ -158,8 +162,8 @@ export class UserRepository extends BaseRepository<User, string> {
           },
         },
       });
-      
-      return users.map(u => this.mapToDomain(u));
+
+      return users.map((u: any) => this.mapToDomain(u));
     } catch (error) {
       throw new Error(`Error finding users by task: ${error}`);
     }

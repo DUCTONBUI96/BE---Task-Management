@@ -1,9 +1,8 @@
 import { BaseService } from './base/BaseService';
 import { User } from '../models/User';
 import { UserRepository } from '../repositories/UserRepository';
-import { CreateUserDTO, UpdateUserDTO, UserResponseDTO, LoginUserDTO, ChangePasswordDTO } from '../dtos/UserDTO';
-import { genSalt } from 'bcrypt-ts';
-import { hash } from 'crypto';
+import { CreateUserDTO, UpdateUserDTO, UserResponseDTO, LoginUserDTO, ChangePasswordDTO, UpdateAvatarDTO } from '../dtos/UserDTO';
+import { genSalt, hash, compare } from 'bcrypt-ts';
 
 /**
  * UserService - Xử lý tất cả business logic liên quan đến User
@@ -67,15 +66,16 @@ export class UserService extends BaseService<User, string> {
         throw new Error('Email already exists');
       }
 
-      // Hash password - TODO: Implement proper password hashing
-      const saltRounds = await genSalt(10);
-      const hashedPassword = await hash(dto.password, saltRounds);
+      // Hash password with bcrypt
+      const saltRounds = 10;
+      const salt = await genSalt(saltRounds);
+      const hashedPassword = await hash(dto.password, salt);
 
       // Tạo user
       const user = await this.repository.create({
         email: dto.email,
         name: dto.name,
-        passwordhash: hashedPassword,
+        passwordHash: hashedPassword,
       } as Partial<User>);
 
       return this.mapToResponseDTO(user);
@@ -140,8 +140,8 @@ export class UserService extends BaseService<User, string> {
         throw new Error('Invalid email or password');
       }
 
-      // TODO: Implement proper password comparison with bcrypt
-      const isPasswordValid = dto.password === user.passwordhash;
+      // Compare password with bcrypt
+      const isPasswordValid = await compare(dto.password, user.passwordHash);
       if (!isPasswordValid) {
         throw new Error('Invalid email or password');
       }
@@ -162,17 +162,40 @@ export class UserService extends BaseService<User, string> {
         throw new Error('User not found');
       }
 
-      // Verify old password - TODO: Implement proper password comparison
-      const isOldPasswordValid = dto.oldPassword === user.passwordhash;
+      // Verify old password with bcrypt
+      const isOldPasswordValid = await compare(dto.oldPassword, user.passwordHash);
       if (!isOldPasswordValid) {
         throw new Error('Old password is incorrect');
       }
 
-      // Hash new password - TODO: Implement proper password hashing
-      const hashedPassword = dto.newPassword;
+      // Hash new password
+      const saltRounds = 10;
+      const salt = await genSalt(saltRounds);
+      const hashedPassword = await hash(dto.newPassword, salt);
 
       // Update password
       const updatedUser = await this.userRepository.updatePassword(userId, hashedPassword);
+      return this.mapToResponseDTO(updatedUser);
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  /**
+   * Cập nhật avatar user
+   */
+  async updateAvatar(userId: string, dto: UpdateAvatarDTO): Promise<UserResponseDTO> {
+    try {
+      const user = await this.getById(userId);
+      if (!user) {
+        throw new Error('User not found');
+      }
+
+      const updatedUser = await this.update(userId, {
+        avatarUrl: dto.avatarUrl,
+        avatarId: dto.avatarId,
+      } as Partial<User>);
+
       return this.mapToResponseDTO(updatedUser);
     } catch (error) {
       throw error;
@@ -201,6 +224,8 @@ export class UserService extends BaseService<User, string> {
       name: user.name,
     };
     
+    if (user.avatarUrl) dto.avatarUrl = user.avatarUrl;
+    if (user.avatarId) dto.avatarId = user.avatarId;
     if (user.createdAt) dto.createdAt = user.createdAt;
     if (user.updatedAt) dto.updatedAt = user.updatedAt;
     
@@ -211,7 +236,7 @@ export class UserService extends BaseService<User, string> {
    * Validation trước khi tạo
    */
   protected override async validateCreate(data: Partial<User>): Promise<void> {
-    if (!data.email || !data.name || !data.passwordhash) {
+    if (!data.email || !data.name || !data.passwordHash) {
       throw new Error('Email, name, and password are required');
     }
   }

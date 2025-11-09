@@ -18,6 +18,8 @@ export interface CreateUserDTO {
 export interface UpdateUserDTO {
   name?: string;
   email?: string;
+  avatarUrl?: string;
+  avatarId?: string;
 }
 
 /**
@@ -27,6 +29,8 @@ export interface UserResponseDTO {
   id: string;
   email: string;
   name: string;
+  avatarUrl?: string;
+  avatarId?: string;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -45,4 +49,12 @@ export interface LoginUserDTO {
 export interface ChangePasswordDTO {
   oldPassword: string;
   newPassword: string;
+}
+
+/**
+ * DTO for updating user avatar
+ */
+export interface UpdateAvatarDTO {
+  avatarUrl: string;
+  avatarId: string;
 }

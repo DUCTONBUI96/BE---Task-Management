@@ -6,7 +6,9 @@ export class User {
   private _id: string;
   private _email: string;
   private _name: string;
-  private _passwordhash: string;
+  private _passwordHash: string;
+  private _avatarUrl: string | undefined;
+  private _avatarId: string | undefined;
   private _createdAt: Date | undefined;
   private _updatedAt: Date | undefined;
 
@@ -14,14 +16,18 @@ export class User {
     id: string,
     email: string,
     name: string,
-    passwordhash: string,
+    passwordHash: string,
+    avatarUrl?: string,
+    avatarId?: string,
     createdAt?: Date,
     updatedAt?: Date
   ) {
     this._id = id;
     this._email = email;
     this._name = name;
-    this._passwordhash = passwordhash;
+    this._passwordHash = passwordHash;
+    this._avatarUrl = avatarUrl;
+    this._avatarId = avatarId;
     this._createdAt = createdAt;
     this._updatedAt = updatedAt;
     
@@ -41,8 +47,16 @@ export class User {
     return this._name;
   }
 
-  get passwordhash(): string {
-    return this._passwordhash;
+  get passwordHash(): string {
+    return this._passwordHash;
+  }
+
+  get avatarUrl(): string | undefined {
+    return this._avatarUrl;
+  }
+
+  get avatarId(): string | undefined {
+    return this._avatarId;
   }
 
   get createdAt(): Date | undefined {
@@ -69,10 +83,24 @@ export class User {
   }
 
   set passwordhash(value: string) {
-    if (!value || value.length < 6) {
-      throw new Error('Password hash is required and must be at least 6 characters');
+    if (!value || value.length < 10) {
+      throw new Error('Password hash is required and must be at least 10 characters');
     }
-    this._passwordhash = value;
+    this._passwordHash = value;
+  }
+
+  set avatarUrl(value: string | undefined) {
+    if (!value) {
+      throw new Error('Avatar URL cannot be empty');
+    }
+    this._avatarUrl = value;
+  }
+
+  set avatarId(value: string | undefined) {
+    if (!value) {
+      throw new Error('Avatar ID cannot be empty');
+    }
+    this._avatarId = value;
   }
 
   /**
@@ -88,7 +116,7 @@ export class User {
     if (!this._name || this._name.trim().length === 0) {
       throw new Error('Name is required');
     }
-    if (!this._passwordhash) {
+    if (!this._passwordHash) {
       throw new Error('Password hash is required');
     }
   }
@@ -111,6 +139,15 @@ export class User {
   }
 
   /**
+   * Update avatar information
+   */
+  updateAvatar(avatarUrl: string, avatarId: string): void {
+    this.avatarUrl = avatarUrl;
+    this.avatarId = avatarId;
+    this._updatedAt = new Date();
+  }
+
+  /**
    * Change password hash
    */
   changePasswordHash(newPasswordHash: string): void {
@@ -126,6 +163,8 @@ export class User {
       id: this._id,
       email: this._email,
       name: this._name,
+      avatarUrl: this._avatarUrl,
+      avatarId: this._avatarId,
       createdAt: this._createdAt,
       updatedAt: this._updatedAt,
     };
@@ -139,7 +178,9 @@ export class User {
       id: this._id,
       email: this._email,
       name: this._name,
-      passwordhash: this._passwordhash,
+      passwordHash: this._passwordHash,
+      avatarUrl: this._avatarUrl,
+      avatarId: this._avatarId,
       createdAt: this._createdAt,
       updatedAt: this._updatedAt,
     };
@@ -153,7 +194,9 @@ export class User {
       data.id,
       data.email,
       data.name,
-      data.passwordhash,
+      data.passwordHash,
+      data.avatarUrl,
+      data.avatarId,
       data.createdAt,
       data.updatedAt
     );

@@ -101,7 +101,7 @@ export abstract class BaseRepository<T, ID> implements IRepository<T, ID> {
    * Begin a transaction
    */
   async transaction<R>(fn: (prisma: PrismaClient) => Promise<R>): Promise<R> {
-    return await this.prisma.$transaction(async (tx) => {
+    return await this.prisma.$transaction(async (tx: PrismaClient) => {
       return await fn(tx as PrismaClient);
     });
   }
