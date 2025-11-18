@@ -5,7 +5,8 @@ const Task = express.Router();
 const taskController = new TaskController();
 
 // GET
-Task.get("/tasks", taskController.getAllTasks);
+// Task.get("/tasks", taskController.getAllTasks);
+Task.get("/tasks", taskController.getAllTasksDetails);
 Task.get("/tasks/:id", taskController.getTaskById);
 Task.get("/projects/:id/tasks", taskController.getTasksByProjectId);
 

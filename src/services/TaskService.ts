@@ -19,7 +19,7 @@ export class TaskService extends BaseService<Task, number> {
     this.taskRepository = taskRepository;
     this.projectService = ProjectService.getInstance();
   }
-
+  
   /**
    * Lấy singleton instance
    */
@@ -41,7 +41,19 @@ export class TaskService extends BaseService<Task, number> {
       throw new Error(`Error getting all tasks: ${error}`);
     }
   }
-
+  async getAllTasksDetails(): Promise<TaskDetailDTO[]> {
+    try {
+      // Lấy tất cả task từ repository
+      const tasks = await this.taskRepository.findAllWithDetails();
+      
+      // Map từng task → TaskDetailDTO
+      const result = tasks.map(task => this.mapToDetailDTO(task));
+      return result;
+    } catch (error) {
+      throw new Error(`Error getting all tasks: ${error}`);
+    }
+  }
+  
   /**
    * Lấy task theo ID
    */
@@ -279,6 +291,76 @@ export class TaskService extends BaseService<Task, number> {
       throw new Error('Project ID is required');
     }
   }
+
+    /**
+   * Map Task entity sang TaskDetailDTO
+   */
+  private mapToDetailDTO(task: any): TaskDetailDTO {
+    const dto: TaskDetailDTO = {
+      id: task.id,
+      projectId: task.projectId,
+      name: task.name,
+      statusId: task.statusId,
+      priorityId: task.priorityId,
+      description: task.description ?? undefined,
+      deadline: task.deadline ?? undefined,
+      createdAt: task.createdAt ?? undefined,
+      updatedAt: task.updatedAt ?? undefined,
+    };
+    // Relations
+    if (task.project) {
+      dto.project = {
+        id: task.project.id,
+        name: task.project.name,
+      };
+    }
+
+    if (task.status) {
+      dto.status = {
+        id: task.status.id,
+        name: task.status.name,
+      };
+    }
+
+    if (task.priority) {
+      dto.priority = {
+        id: task.priority.id,
+        name: task.priority.name,
+        level: task.priority.level,
+      };
+    }
+
+    if (task.tags?.length) {
+      dto.tags = task.tags.map((t: any) => ({
+        id: t.id,
+        name: t.name,
+      }));
+    }
+
+    if (task.assignedUsers?.length) {
+      dto.assignedUsers = task.assignedUsers.map((u: any) => ({
+        id: u.id,
+        name: u.name,
+        email: u.email,
+      }));
+    }
+
+    if (task.comments?.length) {
+      dto.commentCount = task.comments.length;
+      dto.comments = task.comments.map((c: any) => ({
+        id: c.id,
+        content: c.content,
+        userId: c.userId,
+        userName: c.user?.name ?? "",
+        createdAt: c.createdAt,
+        updatedAt: c.updatedAt,
+      }));
+    }
+
+    return dto;
+  }
+  
+  
 
   /**
    * Validation trước khi cập nhật

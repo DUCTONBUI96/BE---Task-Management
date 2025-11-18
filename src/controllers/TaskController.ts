@@ -35,6 +35,15 @@ export class TaskController {
     }
   };
 
+  getAllTasksDetails = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const tasks = await this.taskService.getAllTasksDetails();
+      this.handleResponse(res, 200, 'Success', tasks);
+    } catch (err) {
+      next(err);
+    }
+  };
+
   /**
    * GET /tasks/:id - Lấy task theo ID
    */
