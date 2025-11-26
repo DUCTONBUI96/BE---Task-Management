@@ -5,7 +5,8 @@ const Project = express.Router();
 const projectController = new ProjectController();
 
 // GET
-Project.get("/projects", projectController.getAllProjects);
+// Project.get("/projects", projectController.getAllProjects);
+Project.get("/projects", projectController.getAllProjectsDetail);
 Project.get("/projects/:id", projectController.getProjectById);
 Project.get("/projects/:id/member", projectController.getProjectMembers);
 

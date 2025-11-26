@@ -46,7 +46,7 @@ export class ProjectRepository extends BaseRepository<Project, number> {
   }
 
   /**
-   * Find all projects with task counts and member counts
+   * Find all projects with task counts, task complete and member counts
    */
   async findAllWithStats(): Promise<any[]> {
     try {
@@ -56,7 +56,9 @@ export class ProjectRepository extends BaseRepository<Project, number> {
             select: {
               id: true,
               name: true,
+              deadline:true,
               statusId: true,
+              priorityId:true,
             },
           },
           _count: {
@@ -67,18 +69,56 @@ export class ProjectRepository extends BaseRepository<Project, number> {
           },
         },
       });
-      
-      return projects.map(p => ({
-        ...this.mapToDomain(p).toJSON(),
-        tasks: p.tasks,
-        taskCount: p._count.tasks,
-        memberCount: p._count.userRoles,
-      }));
+  
+      return projects.map(p => {
+        const completedTaskCount = p.tasks.filter(t => t.statusId === 4).length; 
+  
+        return {
+          ...this.mapToDomain(p).toJSON(),
+          tasks: p.tasks,
+          taskCount: p._count.tasks,
+          memberCount: p._count.userRoles,
+          completedTaskCount,
+        };
+      });
     } catch (error) {
       throw new Error(`Error finding projects with stats: ${error}`);
     }
   }
-
+  
+  //   /**
+  //  * Find all projects with task counts and member counts
+  //  */
+  // async findAllWithStats(): Promise<any[]> {
+  //   try {
+  //     const projects = await this.prisma.project.findMany({
+  //       include: {
+  //         tasks: {
+  //           select: {
+  //             id: true,
+  //             name: true,
+  //             statusId: true,
+  //           },
+  //         },
+  //         _count: {
+  //           select: {
+  //             tasks: true,
+  //             userRoles: true,
+  //           },
+  //         },
+  //       },
+  //     });
+      
+  //     return projects.map(p => ({
+  //       ...this.mapToDomain(p).toJSON(),
+  //       tasks: p.tasks,
+  //       taskCount: p._count.tasks,
+  //       memberCount: p._count.userRoles,
+  //     }));
+  //   } catch (error) {
+  //     throw new Error(`Error finding projects with stats: ${error}`);
+  //   }
+  // }
   /**
    * Find project by ID with detailed information
    */

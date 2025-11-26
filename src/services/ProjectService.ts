@@ -1,9 +1,8 @@
 import { BaseService } from './base/BaseService';
 import { Project } from '../models/Project';
 import { ProjectRepository } from '../repositories/ProjectRepository';
-import { CreateProjectDTO, UpdateProjectDTO, ProjectResponseDTO, ProjectDetailDTO, AddMemberDTO } from '../dtos/ProjectDTO';
+import { CreateProjectDTO, UpdateProjectDTO, ProjectResponseDTO, ProjectDetailDTO, AddMemberDTO,ProjectWithStatsDTO } from '../dtos/ProjectDTO';
 import { UserService } from './UserService';
-
 /**
  * ProjectService - Xử lý tất cả business logic liên quan đến Project
  * Singleton Pattern
@@ -37,6 +36,17 @@ export class ProjectService extends BaseService<Project, number> {
     try {
       const projects = await this.projectRepository.findAll();
       return projects.map(project => this.mapToResponseDTO(project));
+    } catch (error) {
+      throw new Error(`Error getting all projects: ${error}`);
+    }
+  }
+   /**
+   * Lấy tất cả detail projects
+   */
+  async getAllDetailsProjects(): Promise<ProjectResponseDTO[]> {
+    try {
+      const projects = await this.projectRepository.findAllWithStats();
+      return projects.map(project => this.mapProjectToWithStatsDTO(project));
     } catch (error) {
       throw new Error(`Error getting all projects: ${error}`);
     }
@@ -213,6 +223,43 @@ export class ProjectService extends BaseService<Project, number> {
     return dto;
   }
 
+  private mapProjectToWithStatsDTO(
+  project: Project & {
+    tasks?: { id: number; name: string; statusId?: number; deadline:Date; priorityId:number }[]; // optional
+    taskCount: number;
+    memberCount: number;
+    completedTaskCount?: number;
+  }
+): ProjectWithStatsDTO {
+  const dto: any = {
+    id: project.id,
+    name: project.name,
+  };
+
+  if (project.description) dto.description = project.description;
+  if (project.createdAt) dto.createdAt = project.createdAt;
+  if (project.updatedAt) dto.updatedAt = project.updatedAt;
+
+  // Stats
+  dto.taskCount = project.taskCount;
+  dto.memberCount = project.memberCount;
+  if (project.completedTaskCount !== undefined)
+    dto.completedTaskCount = project.completedTaskCount;
+
+  // Nếu có tasks (từ Prisma include), thêm vào dto.
+  // Mình map lại để chỉ xuất những field cần thiết.
+  if (project.tasks) {
+    dto.tasks = project.tasks.map(t => ({
+      id: t.id,
+      name: t.name,
+      // chỉ thêm statusId nếu có
+      ...(t.statusId !== undefined ? { statusId: t.statusId } : {}),
+      dealine:t.deadline,
+      priorityId:t.priorityId,
+    }));
+  }
+  return dto;
+}
   /**
    * Validation trước khi tạo
    */

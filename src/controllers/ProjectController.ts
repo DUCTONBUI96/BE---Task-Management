@@ -34,7 +34,17 @@ export class ProjectController {
       next(err);
     }
   };
-
+  /**
+   * GET /projects - Lấy tất cả projects
+   */
+  getAllProjectsDetail = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const projects = await this.projectService.getAllDetailsProjects();
+      this.handleResponse(res, 200, 'Success', projects);
+    } catch (err) {
+      next(err);
+    }
+  };
   /**
    * GET /projects/:id - Lấy project theo ID
    */
