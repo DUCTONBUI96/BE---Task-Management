@@ -1,6 +1,8 @@
 import { NextFunction, Response, Request } from 'express';
 import { UserService } from '../services/UserService';
-import { CreateUserDTO, UpdateUserDTO, LoginUserDTO, ChangePasswordDTO, UpdateAvatarDTO } from '../dtos/UserDTO';
+import { AuthService } from '../services/AuthService';
+import { CreateUserDTO, UpdateUserDTO, ChangePasswordDTO, UpdateAvatarDTO } from '../dtos/UserDTO';
+import { LoginRequestDTO, RefreshTokenRequestDTO, LogoutDTO, LogoutAllDTO } from '../dtos/AuthDTO';
 
 /**
  * UserController - Xử lý HTTP requests liên quan đến User
@@ -12,9 +14,11 @@ import { CreateUserDTO, UpdateUserDTO, LoginUserDTO, ChangePasswordDTO, UpdateAv
  */
 export class UserController {
   private userService: UserService;
+  private authService: AuthService;
 
   constructor() {
     this.userService = UserService.getInstance();
+    this.authService = AuthService.getInstance();
   }
 
   /**
@@ -115,24 +119,6 @@ export class UserController {
   };
 
   /**
-   * POST /users/login - Đăng nhập
-   */
-  login = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    try {
-      const dto: LoginUserDTO = {
-        email: req.body.email,
-        password: req.body.password,
-      };
-
-      const user = await this.userService.login(dto);
-      // TODO: Generate JWT token
-      this.handleResponse(res, 200, 'Login successful', user);
-    } catch (err) {
-      next(err);
-    }
-  };
-
-  /**
    * PUT /users/:id/password - Đổi mật khẩu
    */
   changePassword = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
@@ -199,6 +185,157 @@ export class UserController {
 
       const user = await this.userService.updateAvatar(id, dto);
       this.handleResponse(res, 200, 'Avatar updated successfully', user);
+    } catch (err) {
+      next(err);
+    }
+  };
+
+  /**
+   * POST /auth/login - Đăng nhập
+   * Login user và tạo access token + refresh token
+   */
+  login = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const dto: LoginRequestDTO = {
+        email: req.body.email,
+        password: req.body.password,
+      };
+
+      // Validate
+      if (!dto.email || !dto.password) {
+        this.handleResponse(res, 400, 'Email and password are required');
+        return;
+      }
+
+      // Get IP address and User Agent
+      const ipAddress = req.ip || req.connection.remoteAddress || 'unknown';
+      const userAgent = req.headers['user-agent'] || 'unknown';
+
+      // Call AuthService
+      const result = await this.authService.login(dto, ipAddress, userAgent);
+
+      // Set refresh token in httpOnly cookie
+      res.cookie('refreshToken', result.refreshToken, {
+        httpOnly: true,
+        secure: process.env['NODE_ENV'] === 'production',
+        sameSite: 'strict',
+        maxAge: 10 * 60 * 60 * 1000, // 10 giờ
+        path: '/',
+      });
+
+      // Return access token và user info
+      this.handleResponse(res, 200, 'Login successful', {
+        accessToken: result.accessToken,
+        user: result.user,
+      });
+    } catch (err) {
+      next(err);
+    }
+  };
+
+  /**
+   * POST /auth/refresh - Làm mới access token
+   * Dùng refresh token từ cookie hoặc body để tạo access token mới
+   */
+  refreshToken = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      // Lấy refresh token từ cookie hoặc body
+      const refreshToken = req.cookies['refreshToken'] || req.body.refreshToken;
+
+      if (!refreshToken) {
+        this.handleResponse(res, 401, 'Refresh token is required');
+        return;
+      }
+
+      const dto: RefreshTokenRequestDTO = { refreshToken };
+
+      // Get IP address and User Agent
+      const ipAddress = req.ip || req.connection.remoteAddress || 'unknown';
+      const userAgent = req.headers['user-agent'] || 'unknown';
+
+      // Call AuthService
+      const result = await this.authService.refreshAccessToken(dto, ipAddress, userAgent);
+
+      // Update refresh token in cookie
+      res.cookie('refreshToken', result.refreshToken, {
+        httpOnly: true,
+        secure: process.env['NODE_ENV'] === 'production',
+        sameSite: 'strict',
+        maxAge: 10 * 60 * 60 * 1000,
+        path: '/',
+      });
+
+      this.handleResponse(res, 200, 'Token refreshed', {
+        accessToken: result.accessToken,
+      });
+    } catch (err) {
+      next(err);
+    }
+  };
+
+  /**
+   * POST /auth/logout - Đăng xuất
+   * Revoke refresh token session
+   */
+  logout = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const refreshToken = req.cookies['refreshToken'] || req.body.refreshToken;
+      const userId = req.user?.userId;
+
+      if (refreshToken && userId) {
+        const dto: LogoutDTO = {
+          userId,
+          refreshToken,
+        };
+        await this.authService.logout(dto);
+      }
+
+      // Clear refresh token cookie
+      res.clearCookie('refreshToken', { path: '/' });
+      this.handleResponse(res, 200, 'Logout successful');
+    } catch (err) {
+      next(err);
+    }
+  };
+
+  /**
+   * POST /auth/logout-all - Đăng xuất từ tất cả devices
+   * Revoke tất cả refresh token sessions của user
+   */
+  logoutAll = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const userId = req.user?.userId;
+
+      if (!userId) {
+        this.handleResponse(res, 401, 'User not authenticated');
+        return;
+      }
+
+      const dto: LogoutAllDTO = { userId };
+      await this.authService.logoutAll(dto);
+
+      // Clear refresh token cookie
+      res.clearCookie('refreshToken', { path: '/' });
+      this.handleResponse(res, 200, 'Logged out from all devices');
+    } catch (err) {
+      next(err);
+    }
+  };
+
+  /**
+   * GET /auth/me - Lấy thông tin user hiện tại
+   */
+  getCurrentUser = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const userId = req.user?.userId;
+
+      if (!userId) {
+        this.handleResponse(res, 401, 'User not authenticated');
+        return;
+      }
+
+      const user = await this.userService.getUserById(userId);
+      this.handleResponse(res, 200, 'Success', user);
     } catch (err) {
       next(err);
     }
