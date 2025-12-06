@@ -85,13 +85,20 @@ export class ProjectController {
   };
 
   /**
-   * POST /projects - Tạo project mới
+   * POST /projects - Create new project
    */
   createProject = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
+      // Validate userId from AuthMiddleware
+      if (!req.userId) {
+        this.handleResponse(res, 401, 'User not authenticated');
+        return;
+      }
+
       const dto: CreateProjectDTO = {
         name: req.body.name,
         description: req.body.description,
+        userId: req.userId, // From AuthMiddleware
       };
 
       const project = await this.projectService.createProject(dto);

@@ -8,6 +8,7 @@
 export interface CreateProjectDTO {
   name: string;
   description?: string;
+  userId?: string; // User ID from authenticated user
 }
 
 /**

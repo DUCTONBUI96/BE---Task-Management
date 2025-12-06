@@ -3,6 +3,8 @@ import { Project } from '../models/Project';
 import { ProjectRepository } from '../repositories/ProjectRepository';
 import { CreateProjectDTO, UpdateProjectDTO, ProjectResponseDTO, ProjectDetailDTO, AddMemberDTO,ProjectWithStatsDTO } from '../dtos/ProjectDTO';
 import { UserService } from './UserService';
+import { RoleRepository } from '../repositories/RoleRepository';
+import prisma from '../config/prisma';
 /**
  * ProjectService - Xử lý tất cả business logic liên quan đến Project
  * Singleton Pattern
@@ -96,14 +98,62 @@ export class ProjectService extends BaseService<Project, number> {
   }
 
   /**
-   * Tạo project mới
+   * Tạo project mới và gán user làm Owner
+   * Sử dụng transaction để đảm bảo data consistency
    */
   async createProject(dto: CreateProjectDTO): Promise<ProjectResponseDTO> {
     try {
-      const project = await this.repository.create({
-        name: dto.name,
-        description: dto.description,
-      } as Partial<Project>);
+      // Validate userId
+      if (!dto.userId) {
+        throw new Error('User ID is required to create project');
+      }
+
+      // Sử dụng transaction để tạo project và user role project cùng lúc
+      const result = await prisma.$transaction(async (tx) => {
+        // 1. Tìm role "Owner"
+        // const ownerRole = await tx.role.findUnique({
+        //   where: { name: 'Owner' }
+        // });
+        
+        const ownerRole = await RoleRepository.getInstance().findByName('Owner');
+
+        if (!ownerRole) {
+          throw new Error('Owner role not found. Please seed the database first.');
+        }
+
+        // 2. Tạo project mới
+        const projectData: any = {
+          name: dto.name,
+          description: dto.description,
+        };
+        // if (dto.description) {
+        //   projectData.description = dto.description;
+        // }
+        
+        const newProject = await tx.project.create({
+          data: projectData,
+        });
+
+        // 3. Tạo UserRoleProject (gán user làm Owner của project)
+        await tx.userRoleProject.create({
+          data: {
+            userId: dto.userId!,
+            roleId: ownerRole.id,
+            projectId: newProject.id,
+          },
+        });
+
+        return newProject;
+      });
+
+      // Map to domain model
+      const project = new Project(
+        result.id,
+        result.name,
+        result.description || undefined,
+        result.createdAt,
+        result.updatedAt
+      );
 
       return this.mapToResponseDTO(project);
     } catch (error) {
