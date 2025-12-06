@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { TokenUtils } from '../utils/TokenUtils';
+import { UserRepository } from '../repositories/UserRepository';
 
 /**
  * Extend Express Request type để thêm user property
@@ -30,8 +31,9 @@ export class AuthMiddleware {
    * 
    * Expects: Authorization header với format "Bearer <token>"
    * Sets: req.user với decoded token payload
+   * Verifies: userId exists in database
    */
-  static verifyAccessToken = (req: Request, res: Response, next: NextFunction): void => {
+  static verifyAccessToken = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       // Lấy token từ Authorization header
       const authHeader = req.headers.authorization;
@@ -57,6 +59,18 @@ export class AuthMiddleware {
 
       // Verify token
       const decoded = TokenUtils.verifyAccessToken(token);
+      
+      // Verify user exists in database
+      const userRepository = UserRepository.getInstance();
+      const user = await userRepository.findById(decoded.userId);
+      
+      if (!user) {
+        res.status(401).json({ 
+          status: 401, 
+          message: 'User not found or has been deleted' 
+        });
+        return;
+      }
       
       // Attach user info to request
       req.user = decoded;

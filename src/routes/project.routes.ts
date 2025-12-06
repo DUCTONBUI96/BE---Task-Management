@@ -1,5 +1,6 @@
 import express from "express";
 import { ProjectController } from "../controllers/ProjectController";
+import { AuthMiddleware } from "../middleware/AuthMiddleware";
 
 const Project = express.Router();
 const projectController = new ProjectController();
@@ -11,7 +12,7 @@ Project.get("/projects/:id", projectController.getProjectById);
 Project.get("/projects/:id/member", projectController.getProjectMembers);
 
 // POST
-Project.post("/projects", projectController.createProject);
+Project.post("/projects", AuthMiddleware.verifyAccessToken, projectController.createProject);
 Project.post("/projects/:id/members", projectController.addMember);
 
 // PUT
