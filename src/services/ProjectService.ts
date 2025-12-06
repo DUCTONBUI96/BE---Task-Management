@@ -32,6 +32,18 @@ export class ProjectService extends BaseService<Project, number> {
   }
 
   /**
+   * Get 3 current projects which user joined
+   */
+  async getRecentUserProjects(userId: string, limit: number = 3): Promise<any[]> {
+    try {
+      const projects = await this.projectRepository.findRecentByUserId(userId, limit);
+      return projects;
+    } catch (error) {
+      throw new Error(`Error getting recent user projects: ${error}`);
+    }
+  }
+
+  /**
    * Lấy tất cả projects
    */
   async getAllProjects(): Promise<ProjectResponseDTO[]> {

@@ -255,6 +255,50 @@ export class ProjectRepository extends BaseRepository<Project, number> {
   }
 
   /**
+   * Find recent projects by user ID (top 3 most recently joined)
+   * with member count
+   */
+  async findRecentByUserId(userId: string, limit: number = 3): Promise<any[]> {
+    try {
+      const userRoleProjects = await this.prisma.userRoleProject.findMany({
+        where: {
+          userId: userId,
+        },
+        include: {
+          project: {
+            include: {
+              _count: {
+                select: {
+                  userRoles: true,
+                },
+              },
+            },
+          },
+          role: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+        },
+        orderBy: {
+          joinedAt: 'desc',
+        },
+        take: limit,
+      });
+
+      return userRoleProjects.map(urp => ({
+        ...this.mapToDomain(urp.project).toJSON(),
+        joinedAt: urp.joinedAt,
+        role: urp.role,
+        memberCount: urp.project._count.userRoles,
+      }));
+    } catch (error) {
+      throw new Error(`Error finding recent projects by user: ${error}`);
+    }
+  }
+
+  /**
    * Search projects by name
    */
   async searchByName(searchTerm: string): Promise<Project[]> {

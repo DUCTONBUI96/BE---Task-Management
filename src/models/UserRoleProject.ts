@@ -6,17 +6,20 @@ export class UserRoleProject {
   private _userId: string;
   private _roleId: number;
   private _projectId: number;
+  private _joinedAt: Date;
 
   constructor(
     id: number,
     userId: string,
     roleId: number,
-    projectId: number
+    projectId: number,
+    joinedAt: Date = new Date()
   ) {
     this._id = id;
     this._userId = userId;
     this._roleId = roleId;
     this._projectId = projectId;
+    this._joinedAt = joinedAt;
 
     this.validate();
   }
@@ -36,6 +39,10 @@ export class UserRoleProject {
 
   get projectId(): number {
     return this._projectId;
+  }
+
+  get joinedAt(): Date {
+    return this._joinedAt;
   }
 
   /**
@@ -62,6 +69,7 @@ export class UserRoleProject {
       userId: this._userId,
       roleId: this._roleId,
       projectId: this._projectId,
+      joinedAt: this._joinedAt,
     };
   }
 
@@ -73,7 +81,8 @@ export class UserRoleProject {
       data.id,
       data.userId,
       data.roleId,
-      data.projectId
+      data.projectId,
+      data.joinedAt
     );
   }
 }

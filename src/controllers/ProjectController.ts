@@ -28,12 +28,37 @@ export class ProjectController {
    */
   getAllProjects = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
+      // Validate userId from AuthMiddleware
+      if (!req.userId) {
+        this.handleResponse(res, 401, 'User not authenticated');
+        return;
+      }
       const projects = await this.projectService.getAllProjects();
       this.handleResponse(res, 200, 'Success', projects);
     } catch (err) {
       next(err);
     }
   };
+  
+  /**
+    * GET /projects/current - Get 3 current projects of user
+   */
+  getCurrentProjects = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      // Validate userId from AuthMiddleware
+      if (!req.userId) {
+        this.handleResponse(res, 401, 'User not authenticated');
+        return;
+      }
+      
+      const projects = await this.projectService.getRecentUserProjects(req.userId, 3);
+      this.handleResponse(res, 200, 'Success', projects);
+    
+    } catch (err) {
+      next(err);
+    }
+  };
+  
   /**
    * GET /projects - Lấy tất cả projects
    */
