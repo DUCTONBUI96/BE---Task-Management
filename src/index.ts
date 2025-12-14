@@ -7,11 +7,33 @@ import routerProject from './routes/project.routes';
 import routerTask from './routes/task.routes';
 import routerComment from './routes/comment.routes';
 import authRouter from './routes/auth.routes';
+import systemRouter from './routes/system.routes';
+import { TokenCleanupJob } from './jobs/TokenCleanupJob';
 import dotenv from 'dotenv';
 
 dotenv.config();
 
 const app = express();
+
+// ============ BACKGROUND JOBS ============
+// Initialize and start token cleanup job
+const tokenCleanupJob = TokenCleanupJob.getInstance(
+  parseInt(process.env['TOKEN_CLEANUP_INTERVAL_MINUTES'] || '60', 10)
+);
+tokenCleanupJob.start();
+
+// Graceful shutdown
+process.on('SIGTERM', () => {
+  console.log('SIGTERM received, shutting down gracefully...');
+  tokenCleanupJob.stop();
+  process.exit(0);
+});
+
+process.on('SIGINT', () => {
+  console.log('SIGINT received, shutting down gracefully...');
+  tokenCleanupJob.stop();
+  process.exit(0);
+});
 
 // ============ MIDDLEWARE ============
 app.use(express.json());
@@ -41,6 +63,7 @@ app.use("/api", routerRoles);
 app.use("/api", routerProject);
 app.use("/api", routerTask);
 app.use("/api", routerComment);
+app.use("/api", systemRouter);
 
 // 404 handler
 app.use((req, res) => {

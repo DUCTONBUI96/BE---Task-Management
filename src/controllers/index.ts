@@ -7,3 +7,4 @@ export { ProjectController } from './ProjectController';
 export { TaskController } from './TaskController';
 export { RoleController } from './RoleController';
 export { CommentController } from './CommentController';
+export { SystemController } from './SystemController';

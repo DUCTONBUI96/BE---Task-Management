@@ -194,5 +194,8 @@ model RefreshTokenSession {
 
   user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  // Indexes để tối ưu cleanup queries
+  @@index([expiresAt]) // Tìm expired tokens nhanh hơn
+  @@index([userId, expiresAt]) // Cleanup per-user
   @@map("refresh_token_sessions")
 }
