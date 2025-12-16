@@ -84,9 +84,22 @@ export class TaskRepository extends BaseRepository<Task, number> {
               },
             },
           },
+          comments: { 
+            include: {
+              user: {
+                select: {
+                  id: true,
+                  name: true,
+                  email: true,
+                },
+              },
+            },
+            orderBy: {
+              createdAt: 'asc',
+            },
+          },
         },
       });
-      
       return tasks.map(t => ({
         ...this.mapToDomain(t).toJSON(),
         project: t.project,
@@ -94,6 +107,13 @@ export class TaskRepository extends BaseRepository<Task, number> {
         priority: t.priority,
         tags: t.taskTags.map(tt => tt.tag),
         assignedUsers: t.assignments.map(a => a.user),
+        comments: t.comments.map(c => ({
+          id: c.id,
+          content: c.content,
+          createdAt: c.createdAt,
+          updatedAt: c.updatedAt,
+          user: c.user,
+        })),
       }));
     } catch (error) {
       throw new Error(`Error finding all tasks: ${error}`);
