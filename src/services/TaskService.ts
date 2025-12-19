@@ -97,15 +97,21 @@ export class TaskService extends BaseService<Task, number> {
   }
 
   /**
-   * Lấy tasks theo project ID
+   * Lấy tasks theo project ID với thông tin assignments
    */
-  async getTasksByProjectId(projectId: number): Promise<TaskResponseDTO[]> {
+  async getTasksByProjectId(projectId: number, userId: string): Promise<any[]> {
     try {
       // Kiểm tra project tồn tại
       await this.projectService.getById(projectId);
 
-      const tasks = await this.taskRepository.findByProjectId(projectId);
-      return tasks.map(task => this.mapToResponseDTO(task));
+      // Kiểm tra user có trong project không
+      const isMember = await this.projectService.isUserInProject(userId, projectId);
+      if (!isMember) {
+        throw new Error('You are not a member of this project');
+      }
+
+      const tasks = await this.taskRepository.findByProjectIdWithAssignments(projectId);
+      return tasks;
     } catch (error) {
       throw error;
     }
@@ -246,8 +252,20 @@ export class TaskService extends BaseService<Task, number> {
   /**
    * Cập nhật task status
    */
-  async updateTaskStatus(id: number, dto: UpdateTaskStatusDTO): Promise<TaskResponseDTO> {
+  async updateTaskStatus(id: number, dto: UpdateTaskStatusDTO, userId: string): Promise<TaskResponseDTO> {
     try {
+      // Kiểm tra task có tồn tại không
+      const task = await this.getById(id);
+      if (!task) {
+        throw new Error('Task not found');
+      }
+
+      // Kiểm tra user có được assign vào task không
+      const isAssigned = await this.taskRepository.isUserAssignedToTask(id, userId);
+      if (!isAssigned) {
+        throw new Error('You are not assigned to this task');
+      }
+
       const updatedTask = await this.update(id, { statusId: dto.statusId } as any);
       return this.mapToResponseDTO(updatedTask);
     } catch (error) {

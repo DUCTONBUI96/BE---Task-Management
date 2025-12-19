@@ -271,6 +271,17 @@ export class ProjectService extends BaseService<Project, number> {
   }
 
   /**
+   * Kiểm tra user có trong project không
+   */
+  async isUserInProject(userId: string, projectId: number): Promise<boolean> {
+    try {
+      return await this.projectRepository.isUserMember(projectId, userId);
+    } catch (error) {
+      throw new Error(`Error checking user membership: ${error}`);
+    }
+  }
+
+  /**
    * Map Project entity sang ProjectResponseDTO
    */
   private mapToResponseDTO(project: Project): ProjectResponseDTO {

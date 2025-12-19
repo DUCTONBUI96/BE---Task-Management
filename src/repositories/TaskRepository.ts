@@ -177,6 +177,77 @@ export class TaskRepository extends BaseRepository<Task, number> {
   }
 
   /**
+   * Find tasks by project ID with assignTo and assignedBy details
+   */
+  async findByProjectIdWithAssignments(projectId: number): Promise<any[]> {
+    try {
+      const tasks = await this.prisma.task.findMany({
+        where: {
+          projectId: projectId,
+        },
+        include: {
+          status: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+          priority: {
+            select: {
+              id: true,
+              name: true,
+              level: true,
+            },
+          },
+          assignments: {
+            include: {
+              user: {
+                select: {
+                  id: true,
+                  name: true,
+                  email: true,
+                  avatarUrl: true,
+                },
+              },
+              assignedBy: {
+                select: {
+                  id: true,
+                  name: true,
+                  email: true,
+                  avatarUrl: true,
+                },
+              },
+            },
+          },
+        },
+        orderBy: {
+          createdAt: 'desc',
+        },
+      });
+      
+      return tasks.map(t => ({
+        ...this.mapToDomain(t).toJSON(),
+        status: t.status,
+        priority: t.priority,
+        assignTo: t.assignments.map(a => ({
+          id: a.user.id,
+          name: a.user.name,
+          email: a.user.email,
+          avatar: a.user.avatarUrl,
+        })),
+        assignedBy: t.assignments[0]?.assignedBy ? {
+          id: t.assignments[0].assignedBy.id,
+          name: t.assignments[0].assignedBy.name,
+          email: t.assignments[0].assignedBy.email,
+          avatar: t.assignments[0].assignedBy.avatarUrl,
+        } : null,
+      }));
+    } catch (error) {
+      throw new Error(`Error finding tasks by project with assignments: ${error}`);
+    }
+  }
+
+  /**
    * Find tasks by status ID
    */
   async findByStatusId(statusId: number): Promise<Task[]> {
@@ -394,6 +465,23 @@ export class TaskRepository extends BaseRepository<Task, number> {
       return count;
     } catch (error) {
       throw new Error(`Error counting comments: ${error}`);
+    }
+  }
+
+  /**
+   * Check if user is assigned to task
+   */
+  async isUserAssignedToTask(taskId: number, userId: string): Promise<boolean> {
+    try {
+      const assignment = await this.prisma.userTask.findFirst({
+        where: {
+          taskId: taskId,
+          userId: userId,
+        },
+      });
+      return assignment !== null;
+    } catch (error) {
+      throw new Error(`Error checking user assignment: ${error}`);
     }
   }
 }

@@ -76,7 +76,14 @@ export class TaskController {
   getTasksByProjectId = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const projectId = Number(req.params['id']);
-      const tasks = await this.taskService.getTasksByProjectId(projectId);
+      const userId = (req as any).userId; // Từ AuthMiddleware
+      
+      if (!userId) {
+        this.handleResponse(res, 401, 'Unauthorized');
+        return;
+      }
+
+      const tasks = await this.taskService.getTasksByProjectId(projectId, userId);
       this.handleResponse(res, 200, 'Success', tasks);
     } catch (err) {
       next(err);
@@ -208,11 +215,18 @@ export class TaskController {
   updateTaskStatus = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const id = Number(req.params['id']);
+      const userId = (req as any).userId; // Từ AuthMiddleware
+      
+      if (!userId) {
+        this.handleResponse(res, 401, 'Unauthorized');
+        return;
+      }
+
       const dto: UpdateTaskStatusDTO = {
         statusId: req.body.statusId || req.body.status_id,
       };
 
-      const task = await this.taskService.updateTaskStatus(id, dto);
+      const task = await this.taskService.updateTaskStatus(id, dto, userId);
       this.handleResponse(res, 200, 'Task status updated successfully', task);
     } catch (err) {
       next(err);
