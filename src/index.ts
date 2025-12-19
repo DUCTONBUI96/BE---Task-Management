@@ -7,6 +7,8 @@ import routerProject from './routes/project.routes';
 import routerTask from './routes/task.routes';
 import routerComment from './routes/comment.routes';
 import authRouter from './routes/auth.routes';
+import taskStatusRouter from './routes/taskStatus.routes';
+import taskPriorityRouter from './routes/taskPriority.routes';
 import dotenv from 'dotenv';
 
 dotenv.config();
@@ -41,6 +43,8 @@ app.use("/api", routerRoles);
 app.use("/api", routerProject);
 app.use("/api", routerTask);
 app.use("/api", routerComment);
+app.use("/api", taskStatusRouter);
+app.use("/api", taskPriorityRouter);
 
 // 404 handler
 app.use((req, res) => {

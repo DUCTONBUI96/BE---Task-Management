@@ -33,6 +33,37 @@ export class UserController {
   }
 
   /**
+   * GET /users?q=searchQuery - Search users by email
+   * Supports live search with debouncing
+   */
+  searchUsers = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const searchQuery = req.query['q'] as string;
+      
+      if (!searchQuery) {
+        this.handleResponse(res, 400, 'Search query parameter "q" is required');
+        return;
+      }
+
+      if (searchQuery.trim().length < 2) {
+        this.handleResponse(res, 400, 'Search query must be at least 2 characters');
+        return;
+      }
+
+      const limit = parseInt(req.query['limit'] as string) || 10;
+      const users = await this.userService.searchUsersByEmail(searchQuery, limit);
+      
+      this.handleResponse(res, 200, 'Success', {
+        query: searchQuery,
+        count: users.length,
+        users: users,
+      });
+    } catch (err) {
+      next(err);
+    }
+  };
+
+  /**
    * GET /users - Lấy tất cả users
    */
   getAllUsers = async (req: Request, res: Response, next: NextFunction): Promise<void> => {

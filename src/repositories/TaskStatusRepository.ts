@@ -57,6 +57,26 @@ export class TaskStatusRepository extends BaseRepository<TaskStatus, number> {
   }
 
   /**
+   * Find all statuses sorted by name (ascending)
+   */
+  async findAllSorted(): Promise<TaskStatus[]> {
+    try {
+      const statuses = await this.prisma.taskStatus.findMany({
+        orderBy: {
+          id: 'asc',
+        },
+        select: {
+          id: true,
+          name: true,
+        },
+      });
+      return statuses.map(s => this.mapToDomain({ ...s, createdAt: new Date() }));
+    } catch (error) {
+      throw new Error(`Error finding all statuses: ${error}`);
+    }
+  }
+
+  /**
    * Check if status name exists
    */
   async nameExists(name: string): Promise<boolean> {

@@ -113,6 +113,16 @@ export class TaskController {
         dto.deadline = new Date(req.body.deadline);
       }
 
+      // Thêm assignTo (array of user IDs)
+      if (req.body.assignTo && Array.isArray(req.body.assignTo)) {
+        dto.assignTo = req.body.assignTo; // Array of string IDs
+      }
+
+      // Thêm assignedById (user ID)
+      if (req.body.assignedById) {
+        dto.assignedById = req.body.assignedById;
+      }
+
       const task = await this.taskService.createTask(dto);
       this.handleResponse(res, 201, 'Task created successfully', task);
     } catch (err) {
@@ -162,7 +172,13 @@ export class TaskController {
       const taskId = Number(req.params['id']);
       const dto: AssignTaskDTO = {
         userId: req.body.userId || req.body.user_id,
+        assignedById: req.body.assignedById || req.body.assigned_by_id,
       };
+
+      if (!dto.assignedById) {
+        this.handleResponse(res, 400, 'assignedById is required');
+        return;
+      }
 
       await this.taskService.assignTask(taskId, dto);
       this.handleResponse(res, 200, 'Task assigned successfully');

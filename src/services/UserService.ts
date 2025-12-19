@@ -260,4 +260,20 @@ export class UserService extends BaseService<User, string> {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
   }
+
+  /**
+   * Search users by email (live search)
+   */
+  async searchUsersByEmail(searchQuery: string, limit: number = 10): Promise<any[]> {
+    try {
+      if (!searchQuery || searchQuery.trim().length < 2) {
+        return [];
+      }
+
+      const users = await this.userRepository.searchByEmail(searchQuery, limit);
+      return users;
+    } catch (error) {
+      throw new Error(`Error searching users: ${error}`);
+    }
+  }
 }

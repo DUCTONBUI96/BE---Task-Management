@@ -258,11 +258,12 @@ export class ProjectService extends BaseService<Project, number> {
 
       const members = await this.projectRepository.findMembersByProjectId(projectId);
       return members.map((m: any) => ({
-        userId: m.user_id,
-        roleId: m.role_id,
+        userId: m.userId,
+        roleId: m.roleId,
         userName: m.user?.name,
         userEmail: m.user?.email,
         roleName: m.role?.name,
+        joinedAt: m.joinedAt,
       }));
     } catch (error) {
       throw new Error(`Error getting project members: ${error}`);

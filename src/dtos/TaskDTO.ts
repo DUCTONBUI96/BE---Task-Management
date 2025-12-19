@@ -12,6 +12,8 @@ export interface CreateTaskDTO {
   deadline?: Date;
   statusId: number;
   priorityId: number;
+  assignTo?: string[];          // Array of user IDs to assign
+  assignedById?: string;        // ID of user who assigns (required if assignTo is provided)
 }
 
 /**
@@ -82,6 +84,7 @@ export interface TaskDetailDTO extends TaskResponseDTO {
  */
 export interface AssignTaskDTO {
   userId: string;
+  assignedById: string;  // ID of user who assigns
 }
 
 /**

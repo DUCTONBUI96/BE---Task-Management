@@ -25,6 +25,7 @@ model User {
   comments              Comment[]
   userRoles             UserRoleProject[]
   assignedTasks         UserTask[]
+  tasksAssignedByMe     UserTask[]            @relation("AssignedBy")
   refreshTokenSessions  RefreshTokenSession[]
   
   @@map("users")
@@ -126,14 +127,16 @@ model Task {
 // Task Assignment Table (Many-to-Many between Task and User)
 // User-Task assignment (user assigned to task)
 model UserTask {
-  id         Int      @id @default(autoincrement())
-  taskId     Int      @map("task_id")
-  userId     String   @map("user_id")
-  assignedAt DateTime @default(now()) @map("assigned_at")
+  id           Int      @id @default(autoincrement())
+  taskId       Int      @map("task_id")
+  userId       String   @map("user_id")
+  assignedById String   @map("assigned_by_id")
+  assignedAt   DateTime @default(now()) @map("assigned_at")
 
   // Relations
-  task       Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  task         Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  assignedBy   User     @relation("AssignedBy", fields: [assignedById], references: [id], onDelete: Cascade)
 
   @@unique([taskId, userId])
   @@map("user_task")

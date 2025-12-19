@@ -45,17 +45,21 @@ export class TaskPriorityRepository extends BaseRepository<TaskPriority, number>
   }
 
   /**
-   * Find all priorities sorted by level
+   * Find all priorities sorted by level (ascending)
    */
-  async findAllSortedByLevel(): Promise<TaskPriority[]> {
+  async findAllSortedByLevel(): Promise<any[]> {
     try {
       const priorities = await this.prisma.taskPriority.findMany({
         orderBy: {
-          level: 'desc',
+          level: 'asc',
+        },
+        select: {
+          id: true,
+          name: true,
         },
       });
       
-      return priorities.map(p => this.mapToDomain(p));
+      return priorities;
     } catch (error) {
       throw new Error(`Error finding all priorities: ${error}`);
     }

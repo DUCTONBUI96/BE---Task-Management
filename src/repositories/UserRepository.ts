@@ -168,4 +168,41 @@ export class UserRepository extends BaseRepository<User, string> {
       throw new Error(`Error finding users by task: ${error}`);
     }
   }
+
+  /**
+   * Search users by email (case-insensitive, partial match)
+   * Returns limited results without password
+   */
+  async searchByEmail(searchQuery: string, limit: number = 10): Promise<any[]> {
+    try {
+      if (!searchQuery || searchQuery.trim().length === 0) {
+        return [];
+      }
+
+      const users = await this.prisma.user.findMany({
+        where: {
+          email: {
+            contains: searchQuery.trim(),
+            mode: 'insensitive',
+          },
+        },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          avatarUrl: true,
+          avatarId: true,
+          createdAt: true,
+        },
+        take: limit,
+        orderBy: {
+          email: 'asc',
+        },
+      });
+
+      return users;
+    } catch (error) {
+      throw new Error(`Error searching users by email: ${error}`);
+    }
+  }
 }

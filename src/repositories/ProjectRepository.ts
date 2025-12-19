@@ -319,7 +319,7 @@ export class ProjectRepository extends BaseRepository<Project, number> {
   }
 
   /**
-   * Find all members of a project
+   * Find all members of a project with joinedAt
    */
   async findMembersByProjectId(projectId: number): Promise<any[]> {
     try {
@@ -339,6 +339,9 @@ export class ProjectRepository extends BaseRepository<Project, number> {
               name: true,
             },
           },
+        },
+        orderBy: {
+          joinedAt: 'desc',
         },
       });
       return members;

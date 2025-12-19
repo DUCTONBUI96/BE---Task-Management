@@ -237,12 +237,13 @@ export class TaskRepository extends BaseRepository<Task, number> {
   /**
    * Assign user to task
    */
-  async assignUser(taskId: number, userId: string): Promise<any> {
+  async assignUser(taskId: number, userId: string, assignedById: string): Promise<any> {
     try {
       return await this.prisma.userTask.create({
         data: {
           taskId: taskId,
           userId: userId,
+          assignedById: assignedById,
         },
       });
     } catch (error) {

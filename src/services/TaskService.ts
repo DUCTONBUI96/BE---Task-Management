@@ -3,6 +3,7 @@ import { Task } from '../models/Task';
 import { TaskRepository } from '../repositories/TaskRepository';
 import { CreateTaskDTO, UpdateTaskDTO, TaskResponseDTO, TaskDetailDTO, AssignTaskDTO, UpdateTaskStatusDTO, UpdateTaskPriorityDTO } from '../dtos/TaskDTO';
 import { ProjectService } from './ProjectService';
+import prisma from '../config/prisma';
 
 /**
  * TaskService - Xử lý tất cả business logic liên quan đến Task
@@ -111,21 +112,71 @@ export class TaskService extends BaseService<Task, number> {
   }
 
   /**
-   * Tạo task mới
+   * Tạo task mới với user assignments
    */
   async createTask(dto: CreateTaskDTO): Promise<TaskResponseDTO> {
     try {
       // Kiểm tra project tồn tại
       await this.projectService.getById(dto.projectId);
 
-      const task = await this.repository.create({
-        projectId: dto.projectId,
-        name: dto.name,
-        description: dto.description,
-        deadline: dto.deadline,
-        statusId: dto.statusId,
-        priorityId: dto.priorityId,
-      } as any);
+      // Validate assignedById nếu có assignTo
+      if (dto.assignTo && dto.assignTo.length > 0) {
+        if (!dto.assignedById) {
+          throw new Error('assignedById is required when assigning users to task');
+        }
+      }
+
+      // Sử dụng transaction để tạo task và assignments
+      const result = await prisma.$transaction(async (tx) => {
+        // 1. Tạo task
+        const taskData: any = {
+          projectId: dto.projectId,
+          name: dto.name,
+          statusId: dto.statusId,
+          priorityId: dto.priorityId,
+        };
+        
+        if (dto.description) {
+          taskData.description = dto.description;
+        }
+        
+        if (dto.deadline) {
+          taskData.deadline = dto.deadline;
+        }
+        
+        const newTask = await tx.task.create({
+          data: taskData,
+        });
+
+        // 2. Tạo user assignments nếu có
+        if (dto.assignTo && dto.assignTo.length > 0 && dto.assignedById) {
+          const assignments = dto.assignTo.map((userId) => ({
+            taskId: newTask.id,
+            userId: userId,
+            assignedById: dto.assignedById!,
+          }));
+
+          await tx.userTask.createMany({
+            data: assignments,
+            skipDuplicates: true,
+          });
+        }
+
+        return newTask;
+      });
+
+      // Map to domain model
+      const task = new Task(
+        result.id,
+        result.projectId,
+        result.name,
+        result.statusId,
+        result.priorityId,
+        result.description ?? undefined,
+        result.deadline ?? undefined,
+        result.createdAt,
+        result.updatedAt
+      );
 
       return this.mapToResponseDTO(task);
     } catch (error) {
@@ -172,7 +223,7 @@ export class TaskService extends BaseService<Task, number> {
       // Kiểm tra task tồn tại
       await this.getById(taskId);
 
-      await this.taskRepository.assignUser(taskId, dto.userId);
+      await this.taskRepository.assignUser(taskId, dto.userId, dto.assignedById);
     } catch (error) {
       throw new Error(`Error assigning task: ${error}`);
     }
