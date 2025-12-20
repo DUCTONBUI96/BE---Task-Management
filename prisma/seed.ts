@@ -8,46 +8,87 @@ async function main() {
   // --- 1. Chèn Dữ Liệu Cơ Sở (LOOKUP TABLES) ---
 
   // TaskStatus (4 records: Backlog, To Do, In Progress, Completed)
-  const existingStatuses = await prisma.taskStatus.findMany();
-  if (existingStatuses.length === 0) {
-    const statusData = await prisma.taskStatus.createManyAndReturn({ 
-        data: [
-          { name: 'Backlog' }, 
-          { name: 'To Do' }, 
-          { name: 'In Progress' }, 
-          { name: 'Completed' }
-        ]
-    });
-    console.log(`✅ Đã tạo ${statusData.length} task statuses: Backlog, To Do, In Progress, Completed`);
-  } else {
-    console.log(`⏭️  Đã có ${existingStatuses.length} task statuses, bỏ qua`);
-  }
+  // const existingStatuses = await prisma.taskStatus.findMany();
+  // if (existingStatuses.length === 0) {
+  //   const statusData = await prisma.taskStatus.createManyAndReturn({ 
+  //       data: [
+  //         { name: 'Backlog' }, 
+  //         { name: 'To Do' }, 
+  //         { name: 'In Progress' }, 
+  //         { name: 'Completed' }
+  //       ]
+  //   });
+  //   console.log(`✅ Đã tạo ${statusData.length} task statuses: Backlog, To Do, In Progress, Completed`);
+  const taskStatuses = [
+    'Backlog',
+    'To Do',
+    'In Progress',
+    'Completed',
+  ];
 
+  for (const name of taskStatuses) {
+    await prisma.taskStatus.upsert({
+      where: { name },
+      update: {},
+      create: { name },
+    });
+  }
+  console.log('✅ TaskStatus seeded');
+  // } else {
+  //   console.log(`⏭️  Đã có ${existingStatuses.length} task statuses, bỏ qua`);
+  // }
+
+  const priorities = [
+    { name: 'Low', level: 0 },
+    { name: 'Medium', level: 1 },
+    { name: 'High', level: 2 },
+  ];
+
+  for (const p of priorities) {
+    await prisma.taskPriority.upsert({
+      where: { name: p.name },
+      update: { level: p.level },
+      create: p,
+    });
+  }
+  console.log('✅ TaskPriority seeded');
+ 
   // TaskPriority (3 records: Low, Medium, High)
-  const existingPriorities = await prisma.taskPriority.findMany();
-  if (existingPriorities.length === 0) {
-    const priorityData = await prisma.taskPriority.createManyAndReturn({
-        data: [
-          { name: 'Low', level: 0 }, 
-          { name: 'Medium', level: 1 }, 
-          { name: 'High', level: 2 }
-        ]
-    });
-    console.log(`✅ Đã tạo ${priorityData.length} task priorities: Low, Medium, High`);
-  } else {
-    console.log(`⏭️  Đã có ${existingPriorities.length} task priorities, bỏ qua`);
-  }
+  // const existingPriorities = await prisma.taskPriority.findMany();
+  // if (existingPriorities.length === 0) {
+  //   const priorityData = await prisma.taskPriority.createManyAndReturn({
+  //       data: [
+  //         { name: 'Low', level: 0 }, 
+  //         { name: 'Medium', level: 1 }, 
+  //         { name: 'High', level: 2 }
+  //       ]
+  //   });
+  //   console.log(`✅ Đã tạo ${priorityData.length} task priorities: Low, Medium, High`);
+  // } else {
+  //   console.log(`⏭️  Đã có ${existingPriorities.length} task priorities, bỏ qua`);
+  // }
 
-  // Role (3 records)
-  const existingRoles = await prisma.role.findMany();
-  if (existingRoles.length === 0) {
-    const roleData = await prisma.role.createManyAndReturn({
-        data: [{ name: 'Owner' }, { name: 'Manager' }, { name: 'Developer' }]
+  const roles = ['Owner', 'Manager', 'Developer'];
+
+  for (const name of roles) {
+    await prisma.role.upsert({
+      where: { name },
+      update: {},
+      create: { name },
     });
-    console.log(`✅ Đã tạo ${roleData.length} roles: Owner, Manager, Developer`);
-  } else {
-    console.log(`⏭️  Đã có ${existingRoles.length} roles, bỏ qua`);
   }
+  console.log('✅ Roles seeded');
+  
+  // Role (3 records)
+  // const existingRoles = await prisma.role.findMany();
+  // if (existingRoles.length === 0) {
+  //   const roleData = await prisma.role.createManyAndReturn({
+  //       data: [{ name: 'Owner' }, { name: 'Manager' }, { name: 'Developer' }]
+  //   });
+  //   console.log(`✅ Đã tạo ${roleData.length} roles: Owner, Manager, Developer`);
+  // } else {
+  //   console.log(`⏭️  Đã có ${existingRoles.length} roles, bỏ qua`);
+  // }
   
 //   // Tag (3 records)
 //   const tagFeat = await prisma.tag.create({ data: { name: 'Feature' } });
