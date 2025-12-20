@@ -1,5 +1,5 @@
 import express from 'express';
-import { TaskStatusController } from '../controllers/TaskStatusController';
+import { TaskStatusController } from '~/controllers/TaskStatusController';
 
 const TaskStatuses = express.Router();
 const taskStatusController = new TaskStatusController();

@@ -1,9 +1,9 @@
 import { BaseService } from './base/BaseService';
-import { RefreshTokenSession } from '../models/RefreshTokenSession';
-import { RefreshTokenSessionRepository } from '../repositories/RefreshTokenSessionRepository';
+import { RefreshTokenSession } from '~/models/RefreshTokenSession';
+import { RefreshTokenSessionRepository } from '~/repositories/RefreshTokenSessionRepository';
 import { UserService } from './UserService';
-import { TokenUtils } from '../utils/TokenUtils';
-import { TokenHashUtils } from '../utils/TokenHashUtils';
+import { TokenUtils } from '~/utils/TokenUtils';
+import { TokenHashUtils } from '~/utils/TokenHashUtils';
 import { 
   LoginRequestDTO, 
   LoginResponseDTO, 
@@ -12,7 +12,7 @@ import {
   LogoutDTO,
   LogoutAllDTO
 } from '../dtos/AuthDTO';
-import { compare } from 'bcrypt-ts';
+import { compare } from 'bcrypt';
 
 /**
  * AuthService - Xử lý tất cả business logic liên quan đến authentication

@@ -1,8 +1,9 @@
 import { BaseService } from './base/BaseService';
-import { User } from '../models/User';
-import { UserRepository } from '../repositories/UserRepository';
-import { CreateUserDTO, UpdateUserDTO, UserResponseDTO, LoginUserDTO, ChangePasswordDTO, UpdateAvatarDTO } from '../dtos/UserDTO';
-import { genSalt, hash, compare } from 'bcrypt-ts';
+import { User } from '~/models/User';
+import { UserRepository } from '~/repositories/UserRepository';
+import { CreateUserDTO, UpdateUserDTO, UserResponseDTO, LoginUserDTO, ChangePasswordDTO, UpdateAvatarDTO } from '~/dtos/UserDTO';
+// import { genSalt, hash, compare } from 'bcrypt-ts';
+import bcrypt from 'bcrypt';
 
 /**
  * UserService - Xử lý tất cả business logic liên quan đến User
@@ -68,8 +69,7 @@ export class UserService extends BaseService<User, string> {
 
       // Hash password with bcrypt
       const saltRounds = 10;
-      const salt = await genSalt(saltRounds);
-      const hashedPassword = await hash(dto.password, salt);
+      const hashedPassword = await bcrypt.hash(dto.password, saltRounds);
 
       // Tạo user
       const user = await this.repository.create({
@@ -141,7 +141,7 @@ export class UserService extends BaseService<User, string> {
       }
 
       // Compare password with bcrypt
-      const isPasswordValid = await compare(dto.password, user.passwordHash);
+      const isPasswordValid = await bcrypt.compare(dto.password, user.passwordHash);
       if (!isPasswordValid) {
         throw new Error('Invalid email or password');
       }
@@ -163,15 +163,14 @@ export class UserService extends BaseService<User, string> {
       }
 
       // Verify old password with bcrypt
-      const isOldPasswordValid = await compare(dto.oldPassword, user.passwordHash);
+      const isOldPasswordValid = await bcrypt.compare(dto.oldPassword, user.passwordHash);
       if (!isOldPasswordValid) {
         throw new Error('Old password is incorrect');
       }
 
       // Hash new password
       const saltRounds = 10;
-      const salt = await genSalt(saltRounds);
-      const hashedPassword = await hash(dto.newPassword, salt);
+      const hashedPassword = await bcrypt.hash(dto.newPassword, saltRounds);
 
       // Update password
       const updatedUser = await this.userRepository.updatePassword(userId, hashedPassword);

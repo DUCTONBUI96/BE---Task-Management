@@ -1,8 +1,8 @@
 
 import express from "express";
-import { UserController } from "../controllers/UserController";
-import { DebounceMiddleware } from "../middleware/DebounceMiddleware";
-import { AuthMiddleware } from "../middleware/AuthMiddleware";
+import { UserController } from "~/controllers/UserController";
+import { DebounceMiddleware } from "~/middleware/DebounceMiddleware";
+import { AuthMiddleware } from "~/middleware/AuthMiddleware";
 
 const Users = express.Router();
 const userController = new UserController();

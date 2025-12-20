@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
-import { CommentService } from '../services/CommentService';
-import { CreateCommentDTO, UpdateCommentDTO } from '../dtos/CommentDTO';
+import { CommentService } from '~/services/CommentService';
+import { CreateCommentDTO, UpdateCommentDTO } from '~/dtos/CommentDTO';
 
 /**
  * Helper function để response JSON

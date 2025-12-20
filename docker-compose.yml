@@ -10,8 +10,8 @@ services:
       POSTGRES_USER: ${PGUSER}
       POSTGRES_PASSWORD: ${PGPASSWORD}
       POSTGRES_DB: ${PGDATABASE}
-    ports:
-      - "5432:5432"
+    # ports:
+    #   - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
@@ -31,15 +31,17 @@ services:
     restart: unless-stopped
     ports:
       - "3001:3001"
-    environment:
-      - NODE_ENV=${NODE_ENV}
-      - PGUSER=${PGUSER}
-      - PGHOST=${PGHOST}
-      - PGDATABASE=${PGDATABASE}
-      - PGPASSWORD=${PGPASSWORD}
-      - PGPORT=${PGPORT}
-      - PORT=3001
-      - DATABASE_URL=postgresql://${PGUSER}:${PGPASSWORD}@${PGHOST}:${PGPORT}/${PGDATABASE}?schema=public
+    # environment:
+    #   - NODE_ENV=${NODE_ENV}
+    #   - PGUSER=${PGUSER}
+    #   - PGHOST=${PGHOST}
+    #   - PGDATABASE=${PGDATABASE}
+    #   - PGPASSWORD=${PGPASSWORD}
+    #   - PGPORT=${PGPORT}
+    #   - PORT=3001
+    #   - DATABASE_URL=postgresql://${PGUSER}:${PGPASSWORD}@${PGHOST}:${PGPORT}/${PGDATABASE}?schema=public
+    env_file:
+    - .env
     depends_on:
       postgres:
         condition: service_healthy
