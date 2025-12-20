@@ -25,6 +25,8 @@ export interface UpdateTaskDTO {
   deadline?: Date;
   statusId?: number;
   priorityId?: number;
+  assignTo?: string[];          // Array of user IDs to assign
+  assignedById?: string;        // ID of user who assigns (required if assignTo is provided)
 }
 
 /**

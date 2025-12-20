@@ -4,6 +4,7 @@ import { TaskRepository } from '../repositories/TaskRepository';
 import { CreateTaskDTO, UpdateTaskDTO, TaskResponseDTO, TaskDetailDTO, AssignTaskDTO, UpdateTaskStatusDTO, UpdateTaskPriorityDTO } from '../dtos/TaskDTO';
 import { ProjectService } from './ProjectService';
 import prisma from '../config/prisma';
+import { NotFoundError, ForbiddenError, BadRequestError } from '../utils/CustomErrors';
 
 /**
  * TaskService - Xử lý tất cả business logic liên quan đến Task
@@ -59,41 +60,33 @@ export class TaskService extends BaseService<Task, number> {
    * Lấy task theo ID
    */
   async getTaskById(id: number): Promise<TaskResponseDTO> {
-    try {
-      const task = await this.getById(id);
-      if (!task) {
-        throw new Error('Task not found');
-      }
-      return this.mapToResponseDTO(task);
-    } catch (error) {
-      throw error;
+    const task = await this.getById(id);
+    if (!task) {
+      throw new NotFoundError('Task not found');
     }
+    return this.mapToResponseDTO(task);
   }
 
   /**
    * Lấy task detail
    */
   async getTaskDetail(id: number): Promise<TaskDetailDTO> {
-    try {
-      const task = await this.getById(id);
-      if (!task) {
-        throw new Error('Task not found');
-      }
-
-      // Đếm số lượng comments
-      const commentCount = await this.taskRepository.countCommentsByTaskId(id);
-
-      // TODO: Lấy thêm thông tin tags, assigned users, comments
-      return {
-        ...this.mapToResponseDTO(task),
-        commentCount,
-        tags: [],
-        assignedUsers: [],
-        comments: [],
-      };
-    } catch (error) {
-      throw new Error(`Error getting task detail: ${error}`);
+    const task = await this.getById(id);
+    if (!task) {
+      throw new NotFoundError('Task not found');
     }
+
+    // Đếm số lượng comments
+    const commentCount = await this.taskRepository.countCommentsByTaskId(id);
+
+    // TODO: Lấy thêm thông tin tags, assigned users, comments
+    return {
+      ...this.mapToResponseDTO(task),
+      commentCount,
+      tags: [],
+      assignedUsers: [],
+      comments: [],
+    };
   }
 
   /**
@@ -121,43 +114,160 @@ export class TaskService extends BaseService<Task, number> {
    * Tạo task mới với user assignments
    */
   async createTask(dto: CreateTaskDTO): Promise<TaskResponseDTO> {
-    try {
-      // Kiểm tra project tồn tại
-      await this.projectService.getById(dto.projectId);
+    // Kiểm tra project tồn tại
+    await this.projectService.getById(dto.projectId);
 
-      // Validate assignedById nếu có assignTo
-      if (dto.assignTo && dto.assignTo.length > 0) {
-        if (!dto.assignedById) {
-          throw new Error('assignedById is required when assigning users to task');
-        }
+    // Validate assignedById nếu có assignTo
+    if (dto.assignTo && dto.assignTo.length > 0) {
+      if (!dto.assignedById) {
+        throw new BadRequestError('assignedById is required when assigning users to task');
       }
 
-      // Sử dụng transaction để tạo task và assignments
-      const result = await prisma.$transaction(async (tx) => {
-        // 1. Tạo task
-        const taskData: any = {
-          projectId: dto.projectId,
-          name: dto.name,
-          statusId: dto.statusId,
-          priorityId: dto.priorityId,
-        };
+      // Kiểm tra assignedById có tồn tại không
+      const assignedByUser = await prisma.user.findUnique({
+        where: { id: dto.assignedById },
+      });
+      if (!assignedByUser) {
+        throw new NotFoundError(`User with id ${dto.assignedById} does not exist`);
+      }
+
+      // Kiểm tra tất cả user IDs trong assignTo có tồn tại không
+      const users = await prisma.user.findMany({
+        where: {
+          id: { in: dto.assignTo },
+        },
+        select: { id: true },
+      });
+
+      const foundUserIds = users.map(u => u.id);
+      const invalidUserIds = dto.assignTo.filter(id => !foundUserIds.includes(id));
+      
+      if (invalidUserIds.length > 0) {
+        throw new NotFoundError(`Users with ids [${invalidUserIds.join(', ')}] do not exist`);
+      }
+    }
+
+    // Sử dụng transaction để tạo task và assignments
+    const result = await prisma.$transaction(async (tx) => {
+      // 1. Tạo task
+      const taskData: any = {
+        projectId: dto.projectId,
+        name: dto.name,
+        statusId: dto.statusId,
+        priorityId: dto.priorityId,
+      };
+      
+      if (dto.description) {
+        taskData.description = dto.description;
+      }
+      
+      if (dto.deadline) {
+        taskData.deadline = dto.deadline;
+      }
+      
+      const newTask = await tx.task.create({
+        data: taskData,
+      });
+
+      // 2. Tạo user assignments nếu có
+      if (dto.assignTo && dto.assignTo.length > 0 && dto.assignedById) {
+        const assignments = dto.assignTo.map((userId) => ({
+          taskId: newTask.id,
+          userId: userId,
+          assignedById: dto.assignedById!,
+        }));
+
+        await tx.userTask.createMany({
+          data: assignments,
+          skipDuplicates: true,
+        });
+      }
+
+      return newTask;
+    });
+
+    // Map to domain model
+    const task = new Task(
+      result.id,
+      result.projectId,
+      result.name,
+      result.statusId,
+      result.priorityId,
+      result.description ?? undefined,
+      result.deadline ?? undefined,
+      result.createdAt,
+      result.updatedAt
+    );
+
+    return this.mapToResponseDTO(task);
+  }
+
+  /**
+   * Cập nhật task
+   */
+  async updateTask(id: number, dto: UpdateTaskDTO): Promise<TaskResponseDTO> {
+    // Check existed task
+    const existingTask = await this.getById(id);
+    if (!existingTask) {
+      throw new NotFoundError('Task not found');
+    }
+
+    // Validate assignedById nếu có assignTo
+    if (dto.assignTo && dto.assignTo.length > 0) {
+      if (!dto.assignedById) {
+        throw new BadRequestError('assignedById is required when assigning users to task');
+      }
+
+      // Check existed assignedById
+      const assignedByUser = await prisma.user.findUnique({
+        where: { id: dto.assignedById },
+      });
+      if (!assignedByUser) {
+        throw new NotFoundError(`User with id ${dto.assignedById} does not exist`);
+      }
+
+      // Check existed all user IDs in assignTo
+      const users = await prisma.user.findMany({
+        where: {
+          id: { in: dto.assignTo },
+        },
+        select: { id: true },
+      });
+
+      const foundUserIds = users.map(u => u.id);
+      const invalidUserIds = dto.assignTo.filter(id => !foundUserIds.includes(id));
+      
+      if (invalidUserIds.length > 0) {
+        throw new NotFoundError(`Users with ids [${invalidUserIds.join(', ')}] do not exist`);
+      }
+    }
+
+    // Sử dụng transaction để update task và assignments
+    const result = await prisma.$transaction(async (tx) => {
+      // 1. Update task
+      const updateData: any = {};
         
-        if (dto.description) {
-          taskData.description = dto.description;
-        }
-        
-        if (dto.deadline) {
-          taskData.deadline = dto.deadline;
-        }
-        
-        const newTask = await tx.task.create({
-          data: taskData,
+        if (dto.name !== undefined) updateData.name = dto.name;
+        if (dto.description !== undefined) updateData.description = dto.description;
+        if (dto.deadline !== undefined) updateData.deadline = dto.deadline;
+        if (dto.statusId !== undefined) updateData.statusId = dto.statusId;
+        if (dto.priorityId !== undefined) updateData.priorityId = dto.priorityId;
+
+        const updatedTask = await tx.task.update({
+          where: { id },
+          data: updateData,
         });
 
-        // 2. Tạo user assignments nếu có
+        // 2. Update user assignments nếu có
         if (dto.assignTo && dto.assignTo.length > 0 && dto.assignedById) {
+          // Xóa tất cả assignments cũ
+          await tx.userTask.deleteMany({
+            where: { taskId: id },
+          });
+
+          // Tạo assignments mới
           const assignments = dto.assignTo.map((userId) => ({
-            taskId: newTask.id,
+            taskId: id,
             userId: userId,
             assignedById: dto.assignedById!,
           }));
@@ -168,7 +278,7 @@ export class TaskService extends BaseService<Task, number> {
           });
         }
 
-        return newTask;
+        return updatedTask;
       });
 
       // Map to domain model
@@ -185,119 +295,143 @@ export class TaskService extends BaseService<Task, number> {
       );
 
       return this.mapToResponseDTO(task);
-    } catch (error) {
-      throw error;
-    }
-  }
-
-  /**
-   * Cập nhật task
-   */
-  async updateTask(id: number, dto: UpdateTaskDTO): Promise<TaskResponseDTO> {
-    try {
-      const updateData: any = {};
-      
-      if (dto.name !== undefined) updateData.name = dto.name;
-      if (dto.description !== undefined) updateData.description = dto.description;
-      if (dto.deadline !== undefined) updateData.deadline = dto.deadline;
-      if (dto.statusId !== undefined) updateData.statusId = dto.statusId;
-      if (dto.priorityId !== undefined) updateData.priorityId = dto.priorityId;
-
-      const updatedTask = await this.update(id, updateData);
-      return this.mapToResponseDTO(updatedTask);
-    } catch (error) {
-      throw error;
-    }
   }
 
   /**
    * Xóa task
    */
-  async deleteTask(id: number): Promise<boolean> {
-    try {
-      return await this.delete(id);
-    } catch (error) {
-      throw error;
+  async deleteTask(id: number, userId: string): Promise<boolean> {
+    // Get Task information with project and assignments
+    const taskDetails = await this.taskRepository.getTaskWithPermissionDetails(id);
+      
+    if (!taskDetails) {
+      throw new NotFoundError('Task not found');
     }
+
+    // Check permission of user
+    const hasPermission = this.checkDeletePermission(taskDetails, userId);
+    
+    if (!hasPermission) {
+      throw new ForbiddenError('You do not have permission to delete this task');
+    }
+
+    return await this.delete(id);
+  }
+
+  /**
+   * Kiểm tra quyền xóa task
+   * User có quyền nếu:
+   * 1. Là Owner hoặc Manager của project
+   * 2. Là người assignedBy của task
+   */
+  private checkDeletePermission(taskDetails: any, userId: string): boolean {
+    console.log('=== DEBUG DELETE PERMISSION ===');
+    console.log('userId:', userId);
+    console.log('taskDetails.project.userRoles:', JSON.stringify(taskDetails.project.userRoles, null, 2));
+    console.log('taskDetails.assignments:', JSON.stringify(taskDetails.assignments, null, 2));
+    
+    // Kiểm tra role trong project
+    const userRoleInProject = taskDetails.project.userRoles.find(
+      (ur: any) => ur.userId === userId
+    );
+
+    console.log('userRoleInProject:', userRoleInProject);
+
+    if (userRoleInProject) {
+      const roleName = userRoleInProject.role.name;
+      console.log('roleName:', roleName);
+      
+      // Allow Owner or Manager
+      if (roleName === 'Owner' || roleName === 'Manager') {
+        return true;
+      }
+    } else {
+      return false; // User không trong project thì không có quyền
+    }
+
+    // Kiểm tra xem user có phải là người assignedBy không
+    // CHỈ cho phép nếu task có assignments VÀ user là assignedBy
+    if (!taskDetails.assignments || taskDetails.assignments.length === 0) {
+      return false;
+    }
+
+    const isAssignedBy = taskDetails.assignments.some(
+      (assignment: any) => assignment.assignedById === userId
+    );
+
+    if (isAssignedBy) {
+      return true;
+    }
+
+    return false;
   }
 
   /**
    * Assign task cho user
    */
   async assignTask(taskId: number, dto: AssignTaskDTO): Promise<void> {
-    try {
-      // Kiểm tra task tồn tại
-      await this.getById(taskId);
-
-      await this.taskRepository.assignUser(taskId, dto.userId, dto.assignedById);
-    } catch (error) {
-      throw new Error(`Error assigning task: ${error}`);
+    // Kiểm tra task tồn tại
+    const task = await this.getById(taskId);
+    if (!task) {
+      throw new NotFoundError('Task not found');
     }
+
+    await this.taskRepository.assignUser(taskId, dto.userId, dto.assignedById);
   }
 
   /**
    * Unassign user khỏi task
    */
   async unassignTask(taskId: number, userId: string): Promise<void> {
-    try {
-      // Kiểm tra task tồn tại
-      await this.getById(taskId);
-
-      await this.taskRepository.unassignUser(taskId, userId);
-    } catch (error) {
-      throw new Error(`Error unassigning task: ${error}`);
+    // Kiểm tra task tồn tại
+    const task = await this.getById(taskId);
+    if (!task) {
+      throw new NotFoundError('Task not found');
     }
+
+    await this.taskRepository.unassignUser(taskId, userId);
   }
 
   /**
    * Cập nhật task status
    */
   async updateTaskStatus(id: number, dto: UpdateTaskStatusDTO, userId: string): Promise<TaskResponseDTO> {
-    try {
-      // Kiểm tra task có tồn tại không
-      const task = await this.getById(id);
-      if (!task) {
-        throw new Error('Task not found');
-      }
-
-      // Kiểm tra user có được assign vào task không
-      const isAssigned = await this.taskRepository.isUserAssignedToTask(id, userId);
-      if (!isAssigned) {
-        throw new Error('You are not assigned to this task');
-      }
-
-      const updatedTask = await this.update(id, { statusId: dto.statusId } as any);
-      return this.mapToResponseDTO(updatedTask);
-    } catch (error) {
-      throw error;
+    // Kiểm tra task có tồn tại không
+    const task = await this.getById(id);
+    if (!task) {
+      throw new NotFoundError('Task not found');
     }
+
+    // Kiểm tra user có được assign vào task không
+    const isAssigned = await this.taskRepository.isUserAssignedToTask(id, userId);
+    if (!isAssigned) {
+      throw new ForbiddenError('You are not assigned to this task');
+    }
+
+    const updatedTask = await this.update(id, { statusId: dto.statusId } as any);
+    return this.mapToResponseDTO(updatedTask);
   }
 
   /**
    * Cập nhật task priority
    */
   async updateTaskPriority(id: number, dto: UpdateTaskPriorityDTO): Promise<TaskResponseDTO> {
-    try {
-      const updatedTask = await this.update(id, { priorityId: dto.priorityId } as any);
-      return this.mapToResponseDTO(updatedTask);
-    } catch (error) {
-      throw error;
-    }
+    const updatedTask = await this.update(id, { priorityId: dto.priorityId } as any);
+    return this.mapToResponseDTO(updatedTask);
   }
 
   /**
    * Thêm tags vào task
    */
   async addTags(taskId: number, tagIds: number[]): Promise<void> {
-    try {
-      // Kiểm tra task tồn tại
-      await this.getById(taskId);
+    // Kiểm tra task tồn tại
+    const task = await this.getById(taskId);
+    if (!task) {
+      throw new NotFoundError('Task not found');
+    }
 
-      for (const tagId of tagIds) {
-        await this.taskRepository.addTag(taskId, tagId);
-      }
-    } catch (error) {
-      throw new Error(`Error adding tags: ${error}`);
+    for (const tagId of tagIds) {
+      await this.taskRepository.addTag(taskId, tagId);
     }
   }
 
@@ -305,15 +439,14 @@ export class TaskService extends BaseService<Task, number> {
    * Xóa tags khỏi task
    */
   async removeTags(taskId: number, tagIds: number[]): Promise<void> {
-    try {
-      // Kiểm tra task tồn tại
-      await this.getById(taskId);
+    // Kiểm tra task tồn tại
+    const task = await this.getById(taskId);
+    if (!task) {
+      throw new NotFoundError('Task not found');
+    }
 
-      for (const tagId of tagIds) {
-        await this.taskRepository.removeTag(taskId, tagId);
-      }
-    } catch (error) {
-      throw new Error(`Error removing tags: ${error}`);
+    for (const tagId of tagIds) {
+      await this.taskRepository.removeTag(taskId, tagId);
     }
   }
 
@@ -321,12 +454,8 @@ export class TaskService extends BaseService<Task, number> {
    * Lấy tasks được assigned cho user
    */
   async getTasksByUserId(userId: string): Promise<TaskResponseDTO[]> {
-    try {
-      const tasks = await this.taskRepository.findByUserId(userId);
-      return tasks.map(task => this.mapToResponseDTO(task));
-    } catch (error) {
-      throw new Error(`Error getting tasks by user: ${error}`);
-    }
+    const tasks = await this.taskRepository.findByUserId(userId);
+    return tasks.map(task => this.mapToResponseDTO(task));
   }
 
   /**

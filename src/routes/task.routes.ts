@@ -17,12 +17,12 @@ Task.post("/tasks/:id/assign", taskController.assignTask);
 Task.post("/tasks/:id/tags", taskController.addTags);
 
 // PUT
-Task.put("/tasks/:id", taskController.updateTask);
+Task.put("/tasks/:id", AuthMiddleware.verifyAccessToken, taskController.updateTask);
 Task.put("/tasks/:id/status", AuthMiddleware.verifyAccessToken, taskController.updateTaskStatus);
 Task.put("/tasks/:id/priority", taskController.updateTaskPriority);
 
 // DELETE
-Task.delete("/tasks/:id", taskController.deleteTask);
+Task.delete("/tasks/:id", AuthMiddleware.verifyAccessToken, taskController.deleteTask);
 Task.delete("/tasks/:taskId/assign/:userId", taskController.unassignTask);
 Task.delete("/tasks/:id/tags", taskController.removeTags);
 

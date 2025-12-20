@@ -145,11 +145,28 @@ export class TaskController {
       const id = Number(req.params['id']);
       const dto: any = {};
       
+      const userId = (req as any).userId; 
+      
+      if (!userId) {
+        this.handleResponse(res, 401, 'Unauthorized');
+        return;
+      }
+      
       if (req.body.name !== undefined) dto.name = req.body.name;
       if (req.body.description !== undefined) dto.description = req.body.description;
       if (req.body.deadline) dto.deadline = new Date(req.body.deadline);
       if (req.body.statusId || req.body.status_id) dto.statusId = req.body.status_id || req.body.statusId;
       if (req.body.priorityId || req.body.priority_id) dto.priorityId = req.body.priority_id || req.body.priorityId;
+
+      // Thêm assignTo (array of user IDs)
+      if (req.body.assignTo && Array.isArray(req.body.assignTo)) {
+        dto.assignTo = req.body.assignTo; // Array of string IDs
+      }
+
+      // Thêm assignedById (user ID)
+      if (req.body.assignedById) {
+        dto.assignedById = req.body.assignedById;
+      }
 
       const task = await this.taskService.updateTask(id, dto);
       this.handleResponse(res, 200, 'Task updated successfully', task);
@@ -164,7 +181,14 @@ export class TaskController {
   deleteTask = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const id = Number(req.params['id']);
-      await this.taskService.deleteTask(id);
+      const userId = (req as any).userId;
+      
+      if (!userId) {
+        this.handleResponse(res, 401, 'Unauthorized');
+        return;
+      }
+
+      await this.taskService.deleteTask(id, userId);
       this.handleResponse(res, 200, 'Task deleted successfully');
     } catch (err) {
       next(err);

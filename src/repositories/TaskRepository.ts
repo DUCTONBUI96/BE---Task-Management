@@ -484,4 +484,34 @@ export class TaskRepository extends BaseRepository<Task, number> {
       throw new Error(`Error checking user assignment: ${error}`);
     }
   }
+
+  /**
+   * Get task with project and assignment details for permission check
+   */
+  async getTaskWithPermissionDetails(taskId: number): Promise<any | null> {
+    try {
+      const task = await this.prisma.task.findUnique({
+        where: { id: taskId },
+        include: {
+          project: {
+            include: {
+              userRoles: {
+                include: {
+                  role: true,
+                },
+              },
+            },
+          },
+          assignments: {
+            select: {
+              assignedById: true,
+            },
+          },
+        },
+      });
+      return task;
+    } catch (error) {
+      throw new Error(`Error getting task with permission details: ${error}`);
+    }
+  }
 }

@@ -9,6 +9,7 @@ import routerComment from './routes/comment.routes';
 import authRouter from './routes/auth.routes';
 import taskStatusRouter from './routes/taskStatus.routes';
 import taskPriorityRouter from './routes/taskPriority.routes';
+import { ErrorHandler } from './middleware/ErrorHandler';
 import dotenv from 'dotenv';
 
 dotenv.config();
@@ -55,13 +56,8 @@ app.use((req, res) => {
 });
 
 // ============ ERROR HANDLING ============
-app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
-    console.error('Error:', err);
-    res.status(err.status || 500).json({
-        status: err.status || 500,
-        message: err.message || 'Internal Server Error',
-    });
-});
+// Use custom error handler middleware
+app.use(ErrorHandler.handle);
 
 app.listen(port, () => {
     console.log(`Server is running on port at http://localhost:${port}`);
