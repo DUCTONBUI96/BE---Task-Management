@@ -9,6 +9,7 @@ import routerComment from './routes/comment.routes';
 import authRouter from './routes/auth.routes';
 import taskStatusRouter from './routes/taskStatus.routes';
 import taskPriorityRouter from './routes/taskPriority.routes';
+import metricRouter from './routes/metric.routes';
 import { ErrorHandler } from './middleware/ErrorHandler';
 import dotenv from 'dotenv';
 
@@ -46,6 +47,7 @@ app.use("/api", routerTask);
 app.use("/api", routerComment);
 app.use("/api", taskStatusRouter);
 app.use("/api", taskPriorityRouter);
+app.use("/api", metricRouter);
 
 // 404 handler
 app.use((req, res) => {

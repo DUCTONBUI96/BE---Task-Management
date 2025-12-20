@@ -1,7 +1,7 @@
 import { BaseService } from './base/BaseService';
 import { Project } from '../models/Project';
 import { ProjectRepository } from '../repositories/ProjectRepository';
-import { CreateProjectDTO, UpdateProjectDTO, ProjectResponseDTO, ProjectDetailDTO, AddMemberDTO,ProjectWithStatsDTO } from '../dtos/ProjectDTO';
+import { CreateProjectDTO, UpdateProjectDTO, ProjectResponseDTO, ProjectDetailDTO, AddMemberDTO, ProjectWithStatsDTO } from '../dtos/ProjectDTO';
 import { UserService } from './UserService';
 import { RoleRepository } from '../repositories/RoleRepository';
 import prisma from '../config/prisma';

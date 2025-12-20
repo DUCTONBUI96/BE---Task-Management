@@ -13,7 +13,7 @@ import { jwtConfig } from '../config/jwt';
  */
 export class TokenUtils {
   /**
-   * Tạo Access Token mới (có thời hạn 2 giờ)
+   * Tạo Access Token mới (có thời hạn 1 ngày)
    * Token này được CLIENT gửi lên trong mỗi API request
    * 
    * @param userId - ID của user
@@ -42,7 +42,7 @@ export class TokenUtils {
   }
 
   /**
-   * Tạo Refresh Token mới (có thời hạn 10 giờ)
+   * Tạo Refresh Token mới (có thời hạn 7 ngày)
    * Token này được lưu trong httpOnly cookie
    * 
    * @param userId - ID của user

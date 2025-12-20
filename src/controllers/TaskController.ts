@@ -109,7 +109,7 @@ export class TaskController {
   createTask = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const userId = (req as any).userId;
-      
+      console.log('Authenticated userId:', userId);
       if (!userId) {
         this.handleResponse(res, 401, 'Unauthorized');
         return;

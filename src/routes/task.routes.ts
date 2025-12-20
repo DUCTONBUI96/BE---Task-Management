@@ -12,7 +12,7 @@ Task.get("/tasks/:id", taskController.getTaskById);
 Task.get("/projects/:id/tasks", AuthMiddleware.verifyAccessToken, taskController.getTasksByProjectId);
 
 // POST
-Task.post("/tasks", taskController.createTask);
+Task.post("/tasks", AuthMiddleware.verifyAccessToken, taskController.createTask);
 Task.post("/tasks/:id/assign", taskController.assignTask);
 Task.post("/tasks/:id/tags", taskController.addTags);
 

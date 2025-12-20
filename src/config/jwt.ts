@@ -9,11 +9,11 @@ import * as crypto from "crypto";
  * - TOKEN: Mã JWT được tạo ra từ SECRET KEY (gửi cho client, KHÔNG lưu trong ENV)
  */
 export const jwtConfig = {
-  // Thời hạn access token: 2 giờ
-  accessTokenExpiresIn: "2h",
+  // Thời hạn access token: 1 ngày (24 giờ)
+  accessTokenExpiresIn: "1d",
   
-  // Thời hạn refresh token: 10 giờ
-  refreshTokenExpiresIn: "10h",
+  // Thời hạn refresh token: 7 ngày
+  refreshTokenExpiresIn: "7d",
   
   // SECRET KEY để ký/verify access token (KHÔNG phải token!)
   accessTokenSecretKey: process.env["JWT_ACCESS_SECRET"] || crypto.randomBytes(64).toString("hex"),
