@@ -108,6 +108,13 @@ export class TaskController {
    */
   createTask = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
+      const userId = (req as any).userId;
+      
+      if (!userId) {
+        this.handleResponse(res, 401, 'Unauthorized');
+        return;
+      }
+
       const dto: any = {
         projectId: req.body.project_id || req.body.projectId,
         name: req.body.name,
@@ -130,7 +137,7 @@ export class TaskController {
         dto.assignedById = req.body.assignedById;
       }
 
-      const task = await this.taskService.createTask(dto);
+      const task = await this.taskService.createTask(dto, userId);
       this.handleResponse(res, 201, 'Task created successfully', task);
     } catch (err) {
       next(err);

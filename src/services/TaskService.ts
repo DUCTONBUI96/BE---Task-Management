@@ -100,7 +100,7 @@ export class TaskService extends BaseService<Task, number> {
       // Kiểm tra user có trong project không
       const isMember = await this.projectService.isUserInProject(userId, projectId);
       if (!isMember) {
-        throw new Error('You are not a member of this project');
+        throw new ForbiddenError('You are not a member of this project');
       }
 
       const tasks = await this.taskRepository.findByProjectIdWithAssignments(projectId);
@@ -111,10 +111,16 @@ export class TaskService extends BaseService<Task, number> {
   }
 
   /**
-   * Tạo task mới với user assignments
+   * Create new task with user assignments
    */
-  async createTask(dto: CreateTaskDTO): Promise<TaskResponseDTO> {
-    // Kiểm tra project tồn tại
+  async createTask(dto: CreateTaskDTO, userId: string): Promise<TaskResponseDTO> {
+    const isMember = await this.projectService.isUserInProject(userId, dto.projectId);
+   
+    if (!isMember) {
+      throw new ForbiddenError('You are not a member of this project');
+    }
+
+    // Check existed project
     await this.projectService.getById(dto.projectId);
 
     // Validate assignedById nếu có assignTo
@@ -123,15 +129,17 @@ export class TaskService extends BaseService<Task, number> {
         throw new BadRequestError('assignedById is required when assigning users to task');
       }
 
-      // Kiểm tra assignedById có tồn tại không
+      // Check existed assignedById
       const assignedByUser = await prisma.user.findUnique({
         where: { id: dto.assignedById },
       });
+      
+      // If not existed, set to current userId
       if (!assignedByUser) {
-        throw new NotFoundError(`User with id ${dto.assignedById} does not exist`);
+        dto.assignedById = userId;
       }
 
-      // Kiểm tra tất cả user IDs trong assignTo có tồn tại không
+      // Check existed all user IDs in assignTo
       const users = await prisma.user.findMany({
         where: {
           id: { in: dto.assignTo },
@@ -147,9 +155,9 @@ export class TaskService extends BaseService<Task, number> {
       }
     }
 
-    // Sử dụng transaction để tạo task và assignments
+    // Use transaction to create task and assignments
     const result = await prisma.$transaction(async (tx) => {
-      // 1. Tạo task
+      // 1. Create task
       const taskData: any = {
         projectId: dto.projectId,
         name: dto.name,
@@ -169,7 +177,7 @@ export class TaskService extends BaseService<Task, number> {
         data: taskData,
       });
 
-      // 2. Tạo user assignments nếu có
+      // 2. Create user assignments if any
       if (dto.assignTo && dto.assignTo.length > 0 && dto.assignedById) {
         const assignments = dto.assignTo.map((userId) => ({
           taskId: newTask.id,
@@ -194,7 +202,7 @@ export class TaskService extends BaseService<Task, number> {
       result.statusId,
       result.priorityId,
       result.description ?? undefined,
-      result.deadline ?? undefined,
+      result.deadline ?? new Date(),
       result.createdAt,
       result.updatedAt
     );
