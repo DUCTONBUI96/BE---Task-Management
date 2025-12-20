@@ -5,4 +5,4 @@ dist
 .env
 
 # Prisma
-prisma/migrations
+# prisma/migrations
