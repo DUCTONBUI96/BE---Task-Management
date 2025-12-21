@@ -44,6 +44,18 @@ export class ProjectService extends BaseService<Project, number> {
   }
 
   /**
+   * Get all projects which user joined
+   */
+  async getAllUserProjects(userId: string): Promise<any[]> {
+    try {
+      const projects = await this.projectRepository.findAllByUserId(userId);
+      return projects;
+    } catch (error) {
+      throw new Error(`Error getting all user projects: ${error}`);
+    }
+  }
+
+  /**
    * Lấy tất cả projects
    */
   async getAllProjects(): Promise<ProjectResponseDTO[]> {

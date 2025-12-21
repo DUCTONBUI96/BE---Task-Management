@@ -299,6 +299,49 @@ export class ProjectRepository extends BaseRepository<Project, number> {
   }
 
   /**
+   * Find all projects by user ID (all projects user joined)
+   * with member count
+   */
+  async findAllByUserId(userId: string): Promise<any[]> {
+    try {
+      const userRoleProjects = await this.prisma.userRoleProject.findMany({
+        where: {
+          userId: userId,
+        },
+        include: {
+          project: {
+            include: {
+              _count: {
+                select: {
+                  userRoles: true,
+                },
+              },
+            },
+          },
+          role: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+        },
+        orderBy: {
+          joinedAt: 'desc',
+        },
+      });
+
+      return userRoleProjects.map(urp => ({
+        ...this.mapToDomain(urp.project).toJSON(),
+        joinedAt: urp.joinedAt,
+        role: urp.role,
+        memberCount: urp.project._count.userRoles,
+      }));
+    } catch (error) {
+      throw new Error(`Error finding all projects by user: ${error}`);
+    }
+  }
+
+  /**
    * Search projects by name
    */
   async searchByName(searchTerm: string): Promise<Project[]> {

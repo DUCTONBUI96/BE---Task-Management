@@ -24,7 +24,7 @@ export class ProjectController {
   }
 
   /**
-   * GET /projects - Lấy tất cả projects
+   * GET /projects - Get all project of current user
    */
   getAllProjects = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
@@ -33,7 +33,7 @@ export class ProjectController {
         this.handleResponse(res, 401, 'User not authenticated');
         return;
       }
-      const projects = await this.projectService.getAllProjects();
+      const projects = await this.projectService.getAllUserProjects(req.userId);
       this.handleResponse(res, 200, 'Success', projects);
     } catch (err) {
       next(err);
