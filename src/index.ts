@@ -12,6 +12,8 @@ import taskPriorityRouter from './routes/taskPriority.routes';
 import metricRouter from './routes/metric.routes';
 import { ErrorHandler } from './middleware/ErrorHandler';
 import dotenv from 'dotenv';
+import swaggerUi from 'swagger-ui-express';
+import swaggerSpec from './config/swagger';
 
 dotenv.config();
 
@@ -23,7 +25,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser()); // Parse cookies
 app.use(cors({
     origin: process.env['CORS_ORIGIN']?.split(",") || ["http://localhost:3000"],
-	credentials: true,
+    credentials: true,
 }));
 
 const port = process.env['APP_PORT'] || 3001;
@@ -33,6 +35,9 @@ const port = process.env['APP_PORT'] || 3001;
 app.get("/", (req, res) => {
     res.send("Server is running");
 });
+
+// Swagger Documentation
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 // Auth routes (must be before protected routes)
 app.use("/api", authRouter);
