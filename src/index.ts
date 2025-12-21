@@ -22,7 +22,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser()); // Parse cookies
 app.use(cors({
-    origin: process.env['CORS_ORIGIN']?.split(",") || ["http://localhost:3000"],
+    origin: process.env['CORS_ORIGIN']?.split(",") || ["https://mini-management-project.vercel.app"],
 	credentials: true,
 }));
 
