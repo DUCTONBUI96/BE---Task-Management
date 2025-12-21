@@ -22,10 +22,23 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser()); // Parse cookies
 app.use(cors({
-    origin: process.env['CORS_ORIGIN']?.split(",") || ["https://mini-management-project.vercel.app"],
-	credentials: true,
-}));
-
+    origin: (origin, callback) => {
+      const allowedOrigins = [
+        "https://mini-management-project.vercel.app",
+        "http://localhost:3000",
+      ];
+  
+      // Cho phép Postman, curl (không có origin)
+      if (!origin) return callback(null, true);
+  
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+  
+      return callback(new Error("Not allowed by CORS"));
+    },
+    credentials: true,
+  }));
 const port = process.env['APP_PORT'] || 3001;
 
 // ============ ROUTES ============
