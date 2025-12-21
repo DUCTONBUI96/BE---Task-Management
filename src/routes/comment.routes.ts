@@ -1,5 +1,6 @@
 import express from "express";
 import { CommentController } from "../controllers/CommentController";
+import { AuthMiddleware } from "~/middleware/AuthMiddleware";
 
 const Cmt = express.Router();
 const commentController = new CommentController();
@@ -11,7 +12,7 @@ Cmt.get("/tasks/:taskId/comments", commentController.getCommentsByTaskId);
 Cmt.get("/users/:userId/comments", commentController.getCommentsByUserId);
 
 // POST
-Cmt.post("/comments", commentController.createComment);
+Cmt.post("/comments/:taskId", AuthMiddleware.verifyAccessToken, commentController.createComment);
 
 // PUT
 Cmt.put("/comments/:id", commentController.updateComment);

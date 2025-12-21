@@ -94,16 +94,34 @@ export class CommentController {
   };
 
   /**
-   * POST /comments - Tạo comment mới
+   * POST /comments/:taskId - Create a new comment for a task
    */
   createComment = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const dto: CreateCommentDTO = req.body;
-
-      if (!dto.taskId || !dto.userId || !dto.content) {
-        handleResponse(res, 400, 'Task ID, User ID, and content are required');
+      const userId = (req as any).userId;
+      
+      if (!userId) {
+        handleResponse(res, 401, 'Unauthorized');
         return;
       }
+
+      const taskid = Number(req.params['taskId']);
+
+      if (isNaN(taskid)) {
+        handleResponse(res, 400, 'Invalid task ID');
+        return;
+      }
+
+      if (!req.body.content || req.body.content.trim().length === 0) {
+        handleResponse(res, 400, 'Content is required');
+        return;
+      }
+
+      const dto: CreateCommentDTO = {
+        ...req.body,
+        userId: userId,
+        taskId: taskid
+      };
 
       const newComment = await this.commentService.createComment(dto);
       handleResponse(res, 201, 'Comment created successfully', newComment);
