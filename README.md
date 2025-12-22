@@ -1,22 +1,26 @@
 # 📋 Task Management Backend API
 
-> Backend API cho hệ thống quản lý công việc theo mô hình Clean Architecture & OOP
+> A comprehensive RESTful API backend for team task management system built with Node.js, TypeScript, Express, and PostgreSQL
 
-## 🎯 Giới thiệu
+## 🎯 Overview
 
-Hệ thống backend API RESTful cho ứng dụng quản lý công việc nhóm (Task Management), được xây dựng theo **Clean Architecture** kết hợp **OOP Design Patterns**, đảm bảo code dễ bảo trì, mở rộng và kiểm thử.
+Task Management Backend API is a production-ready REST API designed for collaborative project and task management. Built with modern technologies and best practices, it provides a robust foundation for building team productivity applications.
 
-### ✨ Tính năng chính
+### ✨ Key Features
 
-- 👥 Quản lý users và phân quyền theo role
-- 📁 Quản lý projects và members
-- ✅ Quản lý tasks với status, priority, tags
-- 💬 Comment và collaboration
-- 🔐 Clean Architecture với separation of concerns
-- 🎨 OOP Design Patterns (Repository, Service, Singleton)
-- 🔄 Type-safe với TypeScript và Prisma
+- 🔐 **JWT Authentication** - Secure user authentication with access and refresh tokens
+- 👥 **User Management** - Complete user CRUD with role-based access control
+- 📁 **Project Management** - Create and manage projects with team members
+- ✅ **Task Management** - Full task lifecycle with status, priority, and assignments
+- 🏷️ **Tags System** - Organize tasks with customizable tags
+- 💬 **Comments** - Real-time collaboration with task comments
+- 📊 **Metrics & Analytics** - Track project and task statistics
+- 🔄 **Type Safety** - Full TypeScript support with Prisma ORM
+- 🐳 **Docker Ready** - Containerized deployment with Docker Compose
 
 ## 🛠️ Tech Stack
+
+<div align="center">
 
 ![Node.js](https://img.shields.io/badge/Node.js-339933?logo=node.js&logoColor=white&style=flat)
 ![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=white&style=flat)
@@ -25,269 +29,322 @@ Hệ thống backend API RESTful cho ứng dụng quản lý công việc nhóm 
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-4169E1?logo=postgresql&logoColor=white&style=flat)
 ![Docker](https://img.shields.io/badge/Docker-2496ED?logo=docker&logoColor=white&style=flat)
 
-## 📁 Cấu trúc dự án
+</div>
+
+## 📁 Project Structure
 
 ```
 src/
-├── controllers/       # Presentation Layer - HTTP handlers
-│   ├── UserController.ts
-│   ├── RoleController.ts
-│   ├── ProjectController.ts
-│   ├── TaskController.ts
-│   └── CommentController.ts
-│
-├── services/          # Business Logic Layer
-│   ├── UserService.ts
-│   ├── ProjectService.ts
-│   ├── TaskService.ts
-│   └── base/
-│       └── BaseService.ts
-│
-├── repositories/      # Data Access Layer
-│   ├── UserRepository.ts
-│   ├── ProjectRepository.ts
-│   ├── TaskRepository.ts
-│   └── base/
-│       └── BaseRepository.ts
-│
-├── models/           # Domain Entities
-│   ├── User.ts
-│   ├── Project.ts
-│   └── Task.ts
-│
-├── dtos/             # Data Transfer Objects
-│   ├── UserDTO.ts
-│   ├── ProjectDTO.ts
-│   └── TaskDTO.ts
-│
-├── routes/           # API Routes
-│   ├── user.routes.ts
-│   ├── role.routes.ts
-│   ├── project.routes.ts
-│   ├── task.routes.ts
-│   └── comment.routes.ts
-│
-├── config/           # Configuration
-│   └── prisma.ts
-│
-└── index.ts          # Application entry point
+├── controllers/       # HTTP request handlers
+├── services/          # Business logic layer
+├── repositories/      # Database access layer
+├── models/            # Domain entities
+├── dtos/              # Data transfer objects
+├── routes/            # API route definitions
+├── middleware/        # Custom middleware (auth, error handling)
+├── utils/             # Utility functions
+├── config/            # Configuration files
+└── index.ts           # Application entry point
 
 prisma/
-├── schema.prisma     # Database schema
-└── migrations/       # Database migrations
+├── schema.prisma      # Database schema definition
+├── migrations/        # Database migrations
+└── seed.ts            # Sample data seeder
+
+docs/
+├── API-DOCUMENTATION.md    # Complete API reference
+├── ARCHITECTURE-DIAGRAM.md # System architecture
+├── JWT-AUTHENTICATION.md   # Authentication guide
+└── OOP-ARCHITECTURE.md     # Design patterns
 ```
 
-> 📖 **Tài liệu kiến trúc chi tiết**: Xem thư mục [`docs/`](./docs/) để hiểu rõ hơn về Clean Architecture và OOP patterns được áp dụng.
+## 🚀 Getting Started
 
-## 🚀 Quick Start
+### Prerequisites
 
-### Yêu cầu hệ thống
+- [Node.js](https://nodejs.org/) v16 or higher
+- [Docker Desktop](https://www.docker.com/products/docker-desktop) (recommended)
+- npm or yarn package manager
 
-- [Node.js](https://nodejs.org/) (v16+)
-- [Docker Desktop](https://www.docker.com/products/docker-desktop)
-- npm hoặc yarn
+### Installation
 
-### 1. Clone repository
+#### Option 1: Docker Compose (Recommended)
+
+1. **Clone the repository**
 
 ```bash
 git clone https://github.com/DUCTONBUI96/BE---Task-Management.git
 cd BE---Task-Management
 ```
 
-### 2. Cấu hình môi trường
+2. **Configure environment variables**
 
-Tạo file `.env`:
+Create a `.env` file in the root directory:
 
 ```env
-# Database
+# Database Configuration
 PGUSER=postgres
 PGHOST=localhost
 PGDATABASE=task_management
 PGPASSWORD=your_secure_password
 PGPORT=5432
 
-# Application
+# Application Configuration
 PORT=3001
 NODE_ENV=development
 CORS_ORIGIN=http://localhost:3000
 
-# Prisma
+# JWT Configuration
+JWT_SECRET=your-super-secret-jwt-key-change-this-in-production
+JWT_REFRESH_SECRET=your-super-secret-refresh-token-key
+JWT_EXPIRES_IN=15m
+JWT_REFRESH_EXPIRES_IN=7d
+
+# Prisma Database URL
 DATABASE_URL="postgresql://${PGUSER}:${PGPASSWORD}@${PGHOST}:${PGPORT}/${PGDATABASE}?schema=public"
 ```
 
-### 3. Khởi động với Docker Compose
-
-**Option 1: Chạy toàn bộ (Backend + Database)**
+3. **Start the application**
 
 ```bash
+# Start both backend and PostgreSQL
 docker-compose up -d
+
+# View logs
+docker-compose logs -f backend
 ```
 
-**Option 2: Development mode (Hot reload)**
+#### Option 2: Local Development
+
+1. **Clone and install dependencies**
 
 ```bash
-# Chỉ chạy PostgreSQL
-docker-compose up postgres -d
-
-# Cài dependencies
+git clone https://github.com/DUCTONBUI96/BE---Task-Management.git
+cd BE---Task-Management
 npm install
+```
 
+2. **Start PostgreSQL** (using Docker)
+
+```bash
+docker-compose up postgres -d
+```
+
+3. **Setup database**
+
+```bash
 # Generate Prisma Client
 npm run prisma:generate
 
-# Chạy migrations
+# Run migrations
 npm run prisma:migrate
 
-# Khởi động server
+# Seed sample data (optional)
+npm run prisma:seed
+```
+
+4. **Start development server**
+
+```bash
 npm run dev
 ```
 
-### 4. Kiểm tra
+### Access Points
 
-- 🌐 Backend API: http://localhost:3001
-- 🗄️ Prisma Studio: `npm run prisma:studio` → http://localhost:5555
+| Service | URL |
+|---------|-----|
+| 🌐 API Server | http://localhost:3001 |
+| 🗄️ Prisma Studio | http://localhost:5555 |
 
 ## 📡 API Endpoints
 
+### 🔐 Authentication
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/auth/register` | Register new user |
+| POST | `/api/auth/login` | Login and get tokens |
+| POST | `/api/auth/refresh` | Refresh access token |
+| POST | `/api/auth/logout` | Logout and invalidate tokens |
+| GET | `/api/auth/me` | Get current user info |
+
 ### 👤 Users
-| Method | Endpoint | Mô tả |
-|--------|----------|-------|
-| GET | `/api/users` | Lấy tất cả users |
-| GET | `/api/users/:id` | Lấy user theo ID |
-| POST | `/api/users` | Tạo user mới |
-| PUT | `/api/users/:id` | Cập nhật user |
-| DELETE | `/api/users/:id` | Xóa user |
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/users` | Get all users |
+| GET | `/api/users/:id` | Get user by ID |
+| GET | `/api/users/:id/projects` | Get user's projects |
+| GET | `/api/users/:id/tasks` | Get user's tasks |
+| POST | `/api/users` | Create new user |
+| PUT | `/api/users/:id` | Update user |
+| DELETE | `/api/users/:id` | Delete user |
 
 ### 🎭 Roles
-| Method | Endpoint | Mô tả |
-|--------|----------|-------|
-| GET | `/api/roles` | Lấy tất cả roles |
-| GET | `/api/roles/:id` | Lấy role theo ID |
-| POST | `/api/roles` | Tạo role mới |
-| PUT | `/api/roles/:id` | Cập nhật role |
-| DELETE | `/api/roles/:id` | Xóa role |
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/roles` | Get all roles |
+| GET | `/api/roles/:id` | Get role by ID |
+| POST | `/api/roles` | Create new role |
+| PUT | `/api/roles/:id` | Update role |
+| DELETE | `/api/roles/:id` | Delete role |
 
 ### 📁 Projects
-| Method | Endpoint | Mô tả |
-|--------|----------|-------|
-| GET | `/api/projects` | Lấy tất cả projects |
-| GET | `/api/projects/:id` | Lấy project theo ID |
-| GET | `/api/projects/:id/member` | Lấy members của project |
-| POST | `/api/projects` | Tạo project mới |
-| POST | `/api/projects/:id/members` | Thêm member vào project |
-| PUT | `/api/projects/:id` | Cập nhật project |
-| DELETE | `/api/projects/:id` | Xóa project |
-| DELETE | `/api/projects/:projectId/members/:userId` | Xóa member khỏi project |
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/projects` | Get all projects |
+| GET | `/api/projects/:id` | Get project by ID |
+| GET | `/api/projects/:id/members` | Get project members |
+| GET | `/api/projects/:id/tasks` | Get project tasks |
+| POST | `/api/projects` | Create new project |
+| POST | `/api/projects/:id/members` | Add member to project |
+| PUT | `/api/projects/:id` | Update project |
+| DELETE | `/api/projects/:id` | Delete project |
+| DELETE | `/api/projects/:projectId/members/:userId` | Remove member |
 
 ### ✅ Tasks
-| Method | Endpoint | Mô tả |
-|--------|----------|-------|
-| GET | `/api/tasks` | Lấy tất cả tasks |
-| GET | `/api/tasks/:id` | Lấy task theo ID |
-| GET | `/api/projects/:id/tasks` | Lấy tasks theo project |
-| POST | `/api/tasks` | Tạo task mới |
-| POST | `/api/tasks/:id/assign` | Assign user vào task |
-| POST | `/api/tasks/:id/tags` | Thêm tags vào task |
-| PUT | `/api/tasks/:id` | Cập nhật task |
-| PUT | `/api/tasks/:id/status` | Cập nhật status |
-| PUT | `/api/tasks/:id/priority` | Cập nhật priority |
-| DELETE | `/api/tasks/:id` | Xóa task |
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/tasks` | Get all tasks |
+| GET | `/api/tasks/:id` | Get task by ID |
+| GET | `/api/tasks/:id/users` | Get assigned users |
+| POST | `/api/tasks` | Create new task |
+| POST | `/api/tasks/:id/assign` | Assign user to task |
+| POST | `/api/tasks/:id/tags` | Add tags to task |
+| PUT | `/api/tasks/:id` | Update task |
+| PUT | `/api/tasks/:id/status` | Update task status |
+| PUT | `/api/tasks/:id/priority` | Update task priority |
+| DELETE | `/api/tasks/:id` | Delete task |
+| DELETE | `/api/tasks/:taskId/users/:userId` | Unassign user |
+
+### 🏷️ Task Status & Priority
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/task-status` | Get all task statuses |
+| POST | `/api/task-status` | Create task status |
+| PUT | `/api/task-status/:id` | Update task status |
+| DELETE | `/api/task-status/:id` | Delete task status |
+| GET | `/api/task-priority` | Get all task priorities |
+| POST | `/api/task-priority` | Create task priority |
+| PUT | `/api/task-priority/:id` | Update task priority |
+| DELETE | `/api/task-priority/:id` | Delete task priority |
 
 ### 💬 Comments
-| Method | Endpoint | Mô tả |
-|--------|----------|-------|
-| GET | `/api/comments` | Lấy tất cả comments |
-| GET | `/api/tasks/:taskId/comments` | Lấy comments theo task |
-| POST | `/api/comments` | Tạo comment mới |
-| PUT | `/api/comments/:id` | Cập nhật comment |
-| DELETE | `/api/comments/:id` | Xóa comment |
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/comments` | Get all comments |
+| GET | `/api/comments/:id` | Get comment by ID |
+| GET | `/api/tasks/:taskId/comments` | Get task comments |
+| POST | `/api/comments` | Create new comment |
+| PUT | `/api/comments/:id` | Update comment |
+| DELETE | `/api/comments/:id` | Delete comment |
+
+### 📊 Metrics
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/metrics/overview` | Get system overview |
+| GET | `/api/metrics/projects/:id` | Get project metrics |
+| GET | `/api/metrics/users/:id` | Get user metrics |
+
+> 📖 For detailed request/response examples, see [API-DOCUMENTATION.md](./docs/API-DOCUMENTATION.md)
 
 ## 🗃️ Database Schema
 
-### Core Models
+### Core Entities
 
-- **User** - Người dùng (UUID)
-- **Role** - Vai trò (Admin, Developer, Tester, etc.)
-- **Project** - Dự án
-- **Task** - Nhiệm vụ
-- **TaskStatus** - Trạng thái task
-- **TaskPriority** - Độ ưu tiên
-- **Tag** - Nhãn
-- **Comment** - Bình luận
+| Entity | Description |
+|--------|-------------|
+| **User** | User accounts with authentication |
+| **Role** | Role definitions (Owner, Manager, Developer) |
+| **Project** | Project management |
+| **Task** | Task items with full metadata |
+| **TaskStatus** | Status definitions (Backlog, To Do, In Progress, Completed) |
+| **TaskPriority** | Priority levels (Low, Medium, High) |
+| **Tag** | Task categorization tags |
+| **Comment** | Task discussions |
+| **RefreshTokenSession** | JWT refresh token management |
 
-### Relationships
+### Key Relationships
 
-- User ↔ Project (Many-to-Many qua UserRoleProject)
-- User ↔ Task (Many-to-Many qua UserTask)
+- User ↔ Project (Many-to-Many via `UserRoleProject`)
+- User ↔ Task (Many-to-Many via `UserTask`)
 - Project → Task (One-to-Many)
 - Task → Comment (One-to-Many)
-- Task ↔ Tag (Many-to-Many)
+- Task ↔ Tag (Many-to-Many via `TaskTag`)
+- User → RefreshTokenSession (One-to-Many)
 
-## 🛠️ Scripts npm
+## 🛠️ Available Scripts
 
 ```bash
 # Development
-npm run dev              # Chạy với hot-reload (nodemon)
+npm run dev              # Start server with hot-reload
 
 # Production
-npm run build           # Build TypeScript
-npm start               # Chạy production build
+npm run build            # Compile TypeScript
+npm start                # Run production build
 
 # Database
-npm run prisma:generate # Generate Prisma Client
-npm run prisma:migrate  # Chạy migrations
-npm run prisma:studio   # Mở Prisma Studio GUI
-npm run prisma:seed     # Seed dữ liệu mẫu
+npm run prisma:generate  # Generate Prisma Client
+npm run prisma:migrate   # Run migrations
+npm run prisma:studio    # Open Prisma Studio GUI
+npm run prisma:seed      # Seed sample data
 ```
 
 ## 🐳 Docker Commands
 
 ```bash
-# Khởi động services
+# Start all services (backend + PostgreSQL)
 docker-compose up -d
 
-# Dừng services
+# Stop all services
 docker-compose down
 
-# Xem logs
+# View logs
 docker-compose logs -f backend
 
-# Rebuild images
+# Rebuild and restart
 docker-compose up --build -d
 
-# Xóa tất cả (bao gồm volumes)
+# Remove all containers and volumes
 docker-compose down -v
+
+# Start only PostgreSQL
+docker-compose up postgres -d
 ```
 
-## 🏗️ Kiến trúc
+## 🏗️ Architecture
 
-Project áp dụng **Clean Architecture** với 3 layers chính:
+This project follows a **layered architecture** pattern:
 
 ```
 ┌─────────────────────────────────┐
-│   Controllers (Presentation)    │  ← HTTP requests/responses
+│   Controllers                   │  ← HTTP request handling
 ├─────────────────────────────────┤
-│   Services (Business Logic)     │  ← Business rules & orchestration
+│   Services                      │  ← Business logic
 ├─────────────────────────────────┤
-│   Repositories (Data Access)    │  ← Database operations
+│   Repositories                  │  ← Data access
 ├─────────────────────────────────┤
-│   Database (PostgreSQL)         │  ← Persistent storage
+│   Database (PostgreSQL)         │  ← Data persistence
 └─────────────────────────────────┘
 ```
 
-### Design Patterns được sử dụng
+**Key Design Patterns:**
+- Repository Pattern for data abstraction
+- Service Layer for business logic
+- DTO Pattern for data validation
+- Middleware pattern for cross-cutting concerns
 
-- **Repository Pattern** - Abstraction cho data access
-- **Service Pattern** - Business logic orchestration
-- **Singleton Pattern** - Prisma Client, Services
-- **DTO Pattern** - Data validation & transformation
-- **Dependency Injection** - Loose coupling
-
-> 📚 **Đọc thêm**: [`docs/OOP-ARCHITECTURE.md`](./docs/OOP-ARCHITECTURE.md) cho kiến trúc chi tiết
+> 📚 For detailed architecture documentation, see [`docs/`](./docs/) folder
 
 ## 🔧 Troubleshooting
 
-### Lỗi: Port đã được sử dụng
+### Port Already in Use
 
 ```bash
 # Windows
@@ -295,59 +352,112 @@ netstat -ano | findstr :3001
 taskkill /PID <PID> /F
 
 # Linux/Mac
-lsof -ti:3001 | xargs kill
+lsof -ti:3001 | xargs kill -9
 ```
 
-### Lỗi: Database connection failed
+### Database Connection Failed
 
 ```bash
-# Kiểm tra PostgreSQL container
+# Check PostgreSQL container status
 docker ps
 
-# Xem logs
+# View database logs
 docker logs task-management-postgres
 
 # Restart database
 docker-compose restart postgres
 ```
 
-### Lỗi: Prisma migrations
+### Prisma Issues
 
 ```bash
-# Reset database (XÓA DATA!)
+# Reset database (WARNING: Deletes all data!)
 npx prisma migrate reset
 
-# Generate client
+# Generate Prisma Client
 npx prisma generate
 
-# Chạy migrations
-npx prisma migrate dev
+# Run migrations manually
+npx prisma migrate deploy
 ```
 
 ## 📖 Documentation
 
-- [`docs/OOP-ARCHITECTURE.md`](./docs/OOP-ARCHITECTURE.md) - Kiến trúc OOP chi tiết
-- [`docs/API-DOCUMENTATION.md`](./docs/API-DOCUMENTATION.md) - API reference đầy đủ
+- [`docs/API-DOCUMENTATION.md`](./docs/API-DOCUMENTATION.md) - Complete API reference
+- [`docs/JWT-AUTHENTICATION.md`](./docs/JWT-AUTHENTICATION.md) - Authentication guide
+- [`docs/ARCHITECTURE-DIAGRAM.md`](./docs/ARCHITECTURE-DIAGRAM.md) - System architecture
+- [`docs/OOP-ARCHITECTURE.md`](./docs/OOP-ARCHITECTURE.md) - Design patterns
+
+## 🎯 Sample Data
+
+The project includes a comprehensive seed script with:
+- **20 Users** with hashed passwords
+- **14 Projects** across various domains
+- **137 Tasks** with different statuses and priorities
+- **Task assignments** and **Comments**
+- Pre-configured **Roles**, **Statuses**, and **Priorities**
+
+Run `npm run prisma:seed` to populate the database with sample data.
+
+## 🚀 Deployment
+
+### Environment Variables for Production
+
+```env
+NODE_ENV=production
+PORT=3001
+DATABASE_URL=your_production_database_url
+JWT_SECRET=your_strong_jwt_secret
+JWT_REFRESH_SECRET=your_strong_refresh_secret
+CORS_ORIGIN=https://your-frontend-domain.com
+```
+
+### Docker Production Build
+
+```bash
+# Build production image
+docker build -t task-management-api .
+
+# Run production container
+docker run -p 3001:3001 --env-file .env task-management-api
+```
 
 ## 🤝 Contributing
 
-1. Fork repository
-2. Tạo feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to branch (`git push origin feature/AmazingFeature`)
-5. Tạo Pull Request
+Contributions are welcome! Please follow these steps:
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'feat: add some amazing feature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
 
 ## 📝 License
 
-Dự án này được phát triển cho mục đích học tập.
+This project is developed for educational purposes.
 
-## 👤 Author
+## 👥 Authors
 
-**DUCTONBUI96**
+| Author | GitHub |
+|--------|--------|
+| **Quoc An Tran** | [@tquocan04](https://github.com/tquocan04) |
+| **Duc Ton Bui** | [@DUCTONBUI96](https://github.com/DUCTONBUI96) |
+| **Quoc Long Tran** | [@quoclong20222428](https://github.com/quoclong20222428) |
 
-- GitHub: [@DUCTONBUI96](https://github.com/DUCTONBUI96)
-- Repository: [BE---Task-Management](https://github.com/DUCTONBUI96/BE---Task-Management)
+## 🌟 Acknowledgments
+
+- Built with [Express.js](https://expressjs.com/)
+- ORM powered by [Prisma](https://www.prisma.io/)
+- Database: [PostgreSQL](https://www.postgresql.org/)
+- Authentication: JWT tokens
+- Containerization: [Docker](https://www.docker.com/)
 
 ---
 
-**Happy Coding! 🚀**
+<div align="center">
+
+**If you find this project helpful, please give it a ⭐️**
+
+Made with ❤️ by **Quoc An Tran**, **Duc Ton Bui** & **Quoc Long Tran**
+
+</div>
